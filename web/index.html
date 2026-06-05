@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lemma — Catch what auditors catch, before you ship.</title>
+  <meta name="description" content="Automated security analysis for Solana programs. 22 deterministic checks grounded in real audit evidence. Works in Claude Code." />
+  <meta property="og:title" content="Lemma — Security analysis for Solana programs" />
+  <meta property="og:description" content="Catch what auditors catch, before you ship." />
+  <meta property="og:url" content="https://asklemma.xyz" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <a href="/" class="logo-link">
+      <img src="assets/logo.png" alt="Lemma" class="logo" />
+    </a>
+    <a href="https://github.com/replicolabs/lemma" target="_blank" rel="noopener" class="github-link">
+      <img src="assets/github.svg" alt="" class="github-icon" aria-hidden="true" />
+      <span>GitHub</span>
+    </a>
+  </header>
+  <main class="center">
+    <div class="left-col">
+      <h1 class="headline">
+        Catch what <span class="underline">auditors</span><br />
+        catch, before<br />you ship.
+      </h1>
+      <p class="subtext">
+        Generate formal invariants for Solana programs.<br />
+        Feed them into <a href="https://qedgen.dev" target="_blank" rel="noopener" class="qedgen-link">QEDGen</a> to prove your program correct.
+      </p>
+      <div class="install-pill">
+        <code class="install-code">
+          <span class="prompt">$ </span>curl -fsSL https://asklemma.xyz/install.sh | bash
+        </code>
+        <button class="copy-btn" aria-label="Copy install command" data-copy="curl -fsSL https://asklemma.xyz/install.sh | bash">
+          <svg class="copy-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+          </svg>
+          <svg class="check-icon hidden" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+        </button>
+      </div>
+      <div class="works-with">
+        <span class="works-label">Works with</span>
+        <div class="agent-logos">
+          <a href="https://claude.ai/code" target="_blank" rel="noopener" class="agent-logo-link" title="Claude Code">
+            <img src="assets/claude.webp" alt="Claude Code" class="agent-logo" />
+          </a>
+          <a href="https://cursor.com" target="_blank" rel="noopener" class="agent-logo-link" title="Cursor">
+            <img src="assets/cursor.webp" alt="Cursor" class="agent-logo" />
+          </a>
+          <a href="https://openai.com/codex" target="_blank" rel="noopener" class="agent-logo-link" title="Codex">
+            <img src="assets/codex.webp" alt="Codex" class="agent-logo" />
+          </a>
+        </div>
+      </div>
+    </div>
+    <div class="right-col">
+      <div class="terminal" role="region" aria-label="Lemma demo terminal">
+        <div class="term-titlebar">
+          <div class="term-dots">
+            <span class="term-dot dot-red"></span>
+            <span class="term-dot dot-yellow"></span>
+            <span class="term-dot dot-green"></span>
+          </div>
+          <div class="term-tabs">
+            <div class="term-tab active">
+              <img src="assets/claude.webp" alt="" class="term-tab-logo" aria-hidden="true" />
+              <span>Claude</span>
+            </div>
+          </div>
+        </div>
+        <div class="term-body">
+          <div class="cc-welcome-box">
+            <div class="cc-welcome-title">
+              <span class="cc-asterisk">*</span>
+              <span class="cc-welcome-text">Welcome to <strong>Claude Code!</strong></span>
+            </div>
+            <div class="cc-welcome-hints">
+              <span class="cc-hint">/help for help, /status for your current setup</span>
+              <span class="cc-hint">cwd: /Users/user</span>
+            </div>
+          </div>
+          <div class="cc-input-box">
+            <span class="cc-chevron">&gt;</span>
+            <span class="cc-input-text" id="ccInputText"></span><span class="cc-caret" id="ccCaret"></span>
+          </div>
+          <div class="cc-shortcuts">? for shortcuts</div>
+        </div>
+      </div>
+    </div>
+  </main>
+  <footer class="bottombar">
+    <a href="https://github.com/replico/kb" target="_blank" rel="noopener" class="knowledge-link">
+      Knowledge Source
+      <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+    </a>
+    <span class="copyright">© 2026 Replico Labs</span>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>

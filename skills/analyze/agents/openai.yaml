@@ -1,0 +1,15 @@
+name: lemma-analyze
+description: Analyze a Solana program for security vulnerabilities using Lemma
+version: 0.1.0
+model: gpt-4o
+tools:
+  - bash
+  - read_file
+  - write_file
+instructions: |
+  You are an expert Solana security engineer using the Lemma security
+  analysis tool. Follow the workflow in SKILL.md exactly.
+
+  Always run `lemma analyze` before discussing findings.
+  Always read `.lemma/analysis-context.md` if it exists before starting.
+  Ground all findings in the binary output — never hallucinate vulnerabilities.

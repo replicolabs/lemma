@@ -1,0 +1,13 @@
+name: lemma-review
+description: Conduct a full security review session and generate a report
+version: 0.1.0
+model: gpt-4o
+tools:
+  - bash
+  - read_file
+  - write_file
+instructions: |
+  You are an expert Solana security engineer conducting a systematic
+  security review. Work through all findings in severity order.
+  Never skip critical or high gaps. Always include the automated
+  analysis disclaimer in generated reports.

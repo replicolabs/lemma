@@ -1,0 +1,164 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+
+env:
+  CARGO_TERM_COLOR: always
+  BINARY_NAME: lemma
+
+jobs:
+  build-matrix:
+    name: Build ${{ matrix.target }}
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: x86_64-apple-darwin
+            os: macos-latest
+            archive: tar.gz
+
+          - target: aarch64-apple-darwin
+            os: macos-latest
+            archive: tar.gz
+
+          - target: x86_64-unknown-linux-musl
+            os: ubuntu-latest
+            archive: tar.gz
+
+          - target: aarch64-unknown-linux-musl
+            os: ubuntu-latest
+            archive: tar.gz
+
+          - target: x86_64-pc-windows-msvc
+            os: windows-latest
+            archive: zip
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Install musl tools (Linux)
+        if: contains(matrix.target, 'musl')
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -q -y musl-tools
+          if [ "${{ matrix.target }}" = "aarch64-unknown-linux-musl" ]; then
+            sudo apt-get install -q -y gcc-aarch64-linux-gnu
+            echo "CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_LINKER=aarch64-linux-gnu-gcc" >> $GITHUB_ENV
+          fi
+
+      - name: Cache cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target/
+          key: ${{ runner.os }}-${{ matrix.target }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Build release binary
+        run: cargo build --release --target ${{ matrix.target }}
+
+      - name: Package binary (Unix)
+        if: matrix.archive == 'tar.gz'
+        run: |
+          BINARY_PATH="target/${{ matrix.target }}/release/${{ env.BINARY_NAME }}"
+          ARCHIVE_NAME="${{ env.BINARY_NAME }}-${{ matrix.target }}.tar.gz"
+          tar -czf "${ARCHIVE_NAME}" -C "$(dirname ${BINARY_PATH})" "$(basename ${BINARY_PATH})"
+          echo "ARCHIVE=${ARCHIVE_NAME}" >> $GITHUB_ENV
+
+      - name: Package binary (Windows)
+        if: matrix.archive == 'zip'
+        shell: pwsh
+        run: |
+          $BinaryPath = "target/${{ matrix.target }}/release/${{ env.BINARY_NAME }}.exe"
+          $ArchiveName = "${{ env.BINARY_NAME }}-${{ matrix.target }}.zip"
+          Compress-Archive -Path $BinaryPath -DestinationPath $ArchiveName
+          echo "ARCHIVE=$ArchiveName" | Out-File -FilePath $Env:GITHUB_ENV -Append
+
+      - name: Upload binary artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.target }}
+          path: ${{ env.ARCHIVE }}
+
+  package-skills:
+    name: Package Skills Tarball
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Create skills tarball
+        run: |
+          tar -czf skills.tar.gz skills/
+
+      - name: Upload skills artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: skills
+          path: skills.tar.gz
+
+  release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    needs: [build-matrix, package-skills]
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts/
+
+      - name: Get version from tag
+        id: version
+        run: echo "version=${GITHUB_REF_NAME}" >> $GITHUB_OUTPUT
+
+      - name: Create release and upload assets
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.version }}
+          name: Lemma ${{ steps.version.outputs.version }}
+          draft: false
+          prerelease: false
+          body: |
+            ## Lemma ${{ steps.version.outputs.version }}
+
+            ### Install
+
+            ```bash
+            curl -fsSL https://asklemma.xyz/install.sh | bash
+            ```
+
+            ### Manual download
+
+            Download the binary for your platform below and place it in your PATH.
+
+            | Platform | File |
+            |---|---|
+            | macOS Apple Silicon | `lemma-aarch64-apple-darwin.tar.gz` |
+            | macOS Intel | `lemma-x86_64-apple-darwin.tar.gz` |
+            | Linux x86-64 | `lemma-x86_64-unknown-linux-musl.tar.gz` |
+            | Linux ARM64 | `lemma-aarch64-unknown-linux-musl.tar.gz` |
+            | Windows | `lemma-x86_64-pc-windows-msvc.zip` |
+          files: |
+            artifacts/**/*.tar.gz
+            artifacts/**/*.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
