@@ -67,11 +67,10 @@ impl Config {
             Config::default()
         };
 
-        if let Ok(key) = std::env::var("VOYAGE_API_KEY") {
-            if !key.is_empty() {
+        if let Ok(key) = std::env::var("VOYAGE_API_KEY")
+            && !key.is_empty() {
                 config.voyage.api_key = Some(key);
             }
-        }
 
         Ok(config)
     }

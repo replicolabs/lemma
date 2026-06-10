@@ -16,3 +16,4 @@ public/skills.tar.gz
 public/
 *.tar.gz
 /tmp/
+bench/programs/

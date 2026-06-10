@@ -45,6 +45,8 @@ pub struct AnalyzeArgs {
     pub handler: Option<String>,
     #[arg(long, default_value = "false")]
     pub no_check: bool,
+    #[arg(long, default_value = "false")]
+    pub no_retrieval: bool,
 }
 
 #[derive(Debug, Subcommand)]

@@ -1,58 +1,61 @@
-//! DC-005: Duplicate mutable accounts without key check.
-//!
-//! Trigger: instruction with two or more mutable accounts of the same
-//! Anchor type without a constraint verifying they have different keys.
-//!
-//! Why: if the same account is passed for two mutable parameters, sequential
-//! writes to both cancel each other out. The second write overwrites the
-//! first, producing incorrect final state.
-
-use crate::{checker::rules::gap, types::{InstructionHandler, SecurityGap, Severity, VulnClass}};
+use crate::{
+    checker::rules::gap,
+    types::{AccountDecl, InstructionHandler, SecurityGap, Severity, VulnClass},
+};
 
 pub fn check(handlers: &[InstructionHandler]) -> Vec<SecurityGap> {
     let mut gaps = Vec::new();
     for handler in handlers {
-        let mutable: Vec<_> = handler.accounts.iter().filter(|a| a.is_mutable).collect();
-        if mutable.len() < 2 {
-            continue;
+        let candidates: Vec<&AccountDecl> = handler.accounts.iter()
+            .filter(|a| a.is_mutable && !is_pinned(a))
+            .collect();
+        if candidates.len() < 2 { continue; }
+
+        let mut by_type: std::collections::HashMap<String, Vec<&str>> = Default::default();
+        for a in &candidates {
+            let ty = normalize_type(&a.type_str);
+            if ty == "UncheckedAccount" || ty == "AccountInfo" || ty.is_empty() { continue; }
+            by_type.entry(ty).or_default().push(a.name.as_ref());
         }
-        for i in 0..mutable.len() {
-            for j in (i + 1)..mutable.len() {
-                let a = mutable[i];
-                let b = mutable[j];
-                // Same base type (strip lifetime params for comparison).
-                let base_a = strip_lifetime(&a.type_str);
-                let base_b = strip_lifetime(&b.type_str);
-                if base_a != base_b {
-                    continue;
-                }
-                let a_has_key_check = a.raw_constraint.as_deref()
-                    .map(|c| c.contains("address =") || c.contains(&format!("key = {}", b.name)))
-                    .unwrap_or(false);
-                let b_has_key_check = b.raw_constraint.as_deref()
-                    .map(|c| c.contains("address =") || c.contains(&format!("key = {}", a.name)))
-                    .unwrap_or(false);
-                if !a_has_key_check && !b_has_key_check {
-                    gaps.push(gap(
-                        &handler.name,
-                        VulnClass::MissingOwnershipCheck,
-                        Severity::Medium,
-                        format!(
-                            "Accounts `{}` and `{}` are both mutable with the same type `{}`. \
-                             If the same account is passed for both parameters, writes will \
-                             overwrite each other. Add a `constraint = {}.key() != {}.key()` \
-                             check.",
-                            a.name, b.name, base_a, a.name, b.name,
-                        ),
-                        "DC-005",
-                    ));
-                }
-            }
+        for (ty, names) in by_type {
+            if names.len() < 2 { continue; }
+            gaps.push(gap(
+                &handler.name,
+                VulnClass::MissingOwnershipCheck,
+                Severity::Low,
+                format!(
+                    "Handler `{}` has {} mutable `{}` accounts ({}) with no address-pinning \
+                     constraint. If the same account is passed for two of them, writes \
+                     overwrite each other. Add `constraint = {}.key() != {}.key()`.",
+                    handler.name, names.len(), ty, names.join(", "), names[0], names[1],
+                ),
+                "DC-005",
+            ));
         }
     }
     gaps
 }
 
-fn strip_lifetime(type_str: &str) -> &str {
-    type_str.split('<').next().unwrap_or(type_str).trim()
+fn is_pinned(a: &AccountDecl) -> bool {
+    if a.is_pda || a.has_has_one { return true; }
+    a.raw_constraint.as_deref().map(|c| {
+        c.contains("address =") || c.contains("associated_token")
+            || c.contains("seeds") || c.contains("token::authority")
+    }).unwrap_or(false)
+}
+
+fn normalize_type(type_str: &str) -> String {
+    let s = type_str.trim();
+    let Some(open) = s.find('<') else { return s.to_string(); };
+    let base = &s[..open];
+    let inner = s[open + 1..].trim_start();
+    if inner.starts_with('\'') {
+        if let Some(comma) = inner.find(", ") {
+            format!("{}<{}", base, inner[comma + 2..].trim_start())
+        } else {
+            base.to_string()
+        }
+    } else {
+        format!("{}<{}", base, inner)
+    }
 }

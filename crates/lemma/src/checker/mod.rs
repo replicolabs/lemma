@@ -6,9 +6,8 @@ use rules::{
     dc001_owner, dc002_signer, dc003_init_if_needed, dc004_pda_seeds,
     dc005_duplicate_mutable, dc006_arithmetic, dc007_cargo_overflow,
     dc008_arbitrary_cpi, dc009_canonical_bump, dc010_account_close,
-    dc011_sysvar, dc012_token2022_transfer, dc013_has_one,
-    dc014_lamport_griefing, dc015_lifecycle_status, dc016_one_shot,
-    dc017_permissionless_write, dc018_cpi_identity, dc019_stored_field,
+    dc011_sysvar, dc012_token2022_transfer, dc013_has_one, dc014_lamport_griefing, 
+    dc016_one_shot, dc017_permissionless_write, dc019_stored_field,
     dc020_authority_revoke, dc021_paired_validator, dc022_pda_verify,
 };
 
@@ -25,13 +24,12 @@ pub fn run_all(
             gaps.extend($rule);
         };
     }
-
     run_rule!(dc001_owner::check(handlers));
     run_rule!(dc002_signer::check(handlers));
     run_rule!(dc003_init_if_needed::check(handlers));
     run_rule!(dc004_pda_seeds::check(handlers));
     run_rule!(dc005_duplicate_mutable::check(handlers));
-    run_rule!(dc006_arithmetic::check(handlers));
+    run_rule!(dc006_arithmetic::check(handlers, source));
     run_rule!(dc007_cargo_overflow::check(source));
     run_rule!(dc008_arbitrary_cpi::check(handlers));
     run_rule!(dc009_canonical_bump::check(handlers));
@@ -40,10 +38,8 @@ pub fn run_all(
     run_rule!(dc012_token2022_transfer::check(handlers, source));
     run_rule!(dc013_has_one::check(handlers));
     run_rule!(dc014_lamport_griefing::check(handlers));
-    run_rule!(dc015_lifecycle_status::check(handlers));
     run_rule!(dc016_one_shot::check(handlers));
     run_rule!(dc017_permissionless_write::check(handlers));
-    run_rule!(dc018_cpi_identity::check(handlers));
     run_rule!(dc019_stored_field::check(handlers));
     run_rule!(dc020_authority_revoke::check(handlers));
     run_rule!(dc021_paired_validator::check(handlers));

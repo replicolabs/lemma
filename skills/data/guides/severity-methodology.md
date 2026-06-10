@@ -162,44 +162,6 @@ above modify them based on context.
 
 ---
 
-## Security Score Formula
-
-The security score is a number from 0 to 100 representing the overall
-security posture of the analyzed program. Higher is better.
-
-Starting score: 100
-
-Deductions:
-- Each critical gap: subtract 20 points (maximum deduction from
-  critical gaps: 60 points)
-- Each high gap: subtract 10 points (maximum deduction from high
-  gaps: 30 points)
-- Each medium gap: subtract 5 points (maximum deduction from medium
-  gaps: 20 points)
-- Each low gap: subtract 1 point (maximum deduction from low gaps:
-  5 points)
-- Each informational gap: no deduction
-- Each critical or high architectural recommendation: subtract 5
-  points
-
-The score cannot go below 0.
-
-Acknowledged gaps do not contribute to deductions. A gap acknowledged
-with a reason of intentional design, mitigated elsewhere, or accepted
-risk is excluded from score calculation.
-
-### Score Interpretation
-
-| Score | Interpretation |
-|---|---|
-| 90-100 | Strong security posture. Minor gaps only. |
-| 70-89 | Good posture. Some gaps requiring attention. |
-| 50-69 | Moderate risk. Multiple gaps present. Review before deployment. |
-| 30-49 | Significant risk. Critical or multiple high gaps present. Do not deploy. |
-| 0-29 | Severe risk. Critical gaps present. Requires immediate remediation. |
-
----
-
 ## Deterministic vs LLM-Generated Gaps
 
 Lemma produces two categories of gaps.
@@ -217,16 +179,13 @@ context. Developers should review LLM-generated gaps with the
 understanding that they require human judgment to confirm.
 
 The security report clearly distinguishes deterministic gaps from
-LLM-generated gaps. The security score counts both but the gap report
-labels each one with its source.
+LLM-generated gaps. 
 
 ---
 
 ## Changelog
 
-This methodology is versioned alongside the Lemma binary. Changes to
-the scoring formula or severity rules are documented here so developers
-can understand why their score changed between versions.
+This methodology is versioned alongside the Lemma binary.
 
 v0.1.0 — Initial methodology. 22 deterministic rules. Base severity
 table above. Five adjustment rules.

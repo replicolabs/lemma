@@ -48,9 +48,9 @@ fn has_non_literal_seed(constraint: &str) -> bool {
     let after = &constraint[seeds_start + 9..];
     let seeds_end = after.find(']').unwrap_or(after.len());
     let seeds = &after[..seeds_end];
-    let non_literal = seeds
+    
+    seeds
         .split(',')
         .map(|s| s.trim())
-        .any(|s| !s.is_empty() && !s.starts_with("b\"") && !s.starts_with("b'"));
-    non_literal
+        .any(|s| !s.is_empty() && !s.starts_with("b\"") && !s.starts_with("b'"))
 }

@@ -16,49 +16,39 @@ pub fn check(handlers: &[InstructionHandler]) -> Vec<SecurityGap> {
     let mut gaps = Vec::new();
     for handler in handlers {
         let token_accounts: Vec<_> = handler.accounts.iter().filter(|a| {
-            let lower = a.name.to_ascii_lowercase();
-            lower.contains("token") || lower.contains("vault")
-                || a.type_str.to_ascii_lowercase().contains("tokenaccount")
+            a.type_str.to_ascii_lowercase().contains("tokenaccount")
+                || a.type_str.contains("InterfaceAccount")
         }).collect();
-
-        let mint_accounts: Vec<_> = handler.accounts.iter().filter(|a| {
-            let lower = a.name.to_ascii_lowercase();
-            lower.contains("mint") || a.type_str.to_ascii_lowercase().contains("mint")
-        }).collect();
-
-        if token_accounts.is_empty() || mint_accounts.is_empty() {
-            continue;
-        }
-        let has_cross_validation = handler.accounts.iter().any(|a| {
-            a.has_has_one && a.has_one_field.as_deref()
-                .map(|f| f.contains("mint"))
-                .unwrap_or(false)
-        }) || handler.accounts.iter().any(|a| {
-            a.raw_constraint.as_deref()
-                .map(|c| c.contains("mint") && c.contains("constraint"))
-                .unwrap_or(false)
+        let has_mint = handler.accounts.iter().any(|a| {
+            a.type_str.contains("Mint") || a.name.to_ascii_lowercase().contains("mint")
         });
+        if token_accounts.is_empty() || !has_mint { continue; }
+        let cross_validated = handler.accounts.iter().any(|a| {
+            if a.has_one_field.as_deref().map(|f| f.contains("mint")).unwrap_or(false) {
+                return true;
+            }
+            a.raw_constraint.as_deref().map(|c| {
+                c.contains("token::mint")
+                    || c.contains("associated_token::mint")
+                    || c.contains("mint::")
+                    || c.contains("mint =")
+            }).unwrap_or(false)
+        });
+        if cross_validated { continue; }
 
-        if !has_cross_validation {
-            let token_names: Vec<&str> = token_accounts.iter().map(|a| a.name.as_ref()).collect();
-            let mint_names: Vec<&str> = mint_accounts.iter().map(|a| a.name.as_ref()).collect();
-            gaps.push(gap(
-                &handler.name,
-                VulnClass::PairedValidatorMismatch,
-                Severity::High,
-                format!(
-                    "Handler `{}` accepts token accounts [{}] and mint accounts [{}] \
-                     but does not cross-validate that the token accounts belong to the \
-                     expected mint. An attacker can pass a valid token account for a \
-                     different asset. Add `#[account(has_one = mint)]` to the relevant \
-                     token account.",
-                    handler.name,
-                    token_names.join(", "),
-                    mint_names.join(", "),
-                ),
-                "DC-021",
-            ));
-        }
+        let names: Vec<&str> = token_accounts.iter().map(|a| a.name.as_ref()).collect();
+        gaps.push(gap(
+            &handler.name,
+            VulnClass::PairedValidatorMismatch,
+            Severity::Medium,
+            format!(
+                "Handler `{}` takes token account(s) [{}] alongside a mint but does not bind \
+                 them with `token::mint = <mint>`. An attacker could pass a token account for \
+                 a different asset. Add a `token::mint` (or `has_one = mint`) constraint.",
+                handler.name, names.join(", "),
+            ),
+            "DC-021",
+        ));
     }
     gaps
 }

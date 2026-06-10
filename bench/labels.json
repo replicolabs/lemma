@@ -1,0 +1,125 @@
+{
+  "_readme": "Precision / false-positive benchmark. all_clean=true means this program has no true findings in Lemma's rule classes, so EVERY gap counts as a false positive. This set does NOT measure recall (see notes). transfer-sol is labeled per-handler instead of all_clean because one finding is debatable.",
+  "programs": [
+    { "path": "bench/programs/recall/missing_owner.rs", "framework": "anchor", "in_kb": false,
+      "expected_findings": [{ "handler": "read_data", "vuln_class": "missing_ownership_check" }] },
+    { "path": "bench/programs/recall/missing_has_one.rs", "framework": "anchor", "in_kb": false,
+      "expected_findings": [{ "handler": "update_config", "vuln_class": "missing_signer_check" }] },
+    { "path": "bench/programs/recall/unchecked_math.rs", "framework": "anchor", "in_kb": false,
+      "expected_findings": [{ "handler": "deposit", "vuln_class": "arithmetic_error" }] },
+    { "path": "bench/programs/recall/arbitrary_cpi.rs", "framework": "anchor", "in_kb": false,
+      "expected_findings": [{ "handler": "forward", "vuln_class": "arbitrary_cpi" }] },
+    { "path": "bench/programs/recall/duplicate_mutable.rs", "framework": "anchor", "in_kb": false,
+      "expected_findings": [{ "handler": "move_funds", "vuln_class": "missing_ownership_check" }] },
+    { "path": "bench/programs/recall/reinit.rs", "framework": "anchor", "in_kb": false,
+      "expected_findings": [{ "handler": "setup", "vuln_class": "insecure_initialisation" }] },
+    { "path": "bench/programs/recall/oneshot.rs", "framework": "anchor", "in_kb": false,
+      "expected_findings": [{ "handler": "initialize_vault", "vuln_class": "insecure_initialisation" }] },
+    {
+      "path": "bench/programs/anchor/transfer-sol",
+      "framework": "anchor",
+      "program_type": "other",
+      "in_kb": false,
+      "expected_findings": [],
+      "clean_handlers": ["transfer_sol_with_cpi", "transfer_sol_with_program"]
+    },
+    {
+      "path": "bench/programs/anchor/create-token",
+      "framework": "anchor",
+      "program_type": "token-program",
+      "in_kb": false,
+      "all_clean": true
+    },
+    {
+      "path": "bench/programs/anchor/escrow",
+      "framework": "anchor",
+      "program_type": "other",
+      "in_kb": false,
+      "all_clean": true
+    },
+    {
+      "path": "bench/programs/anchor/fundraiser",
+      "framework": "anchor",
+      "program_type": "other",
+      "in_kb": false,
+      "all_clean": true
+    },
+    {
+      "path": "bench/programs/anchor/immutable-owner",
+      "framework": "anchor",
+      "program_type": "token-program",
+      "in_kb": false,
+      "all_clean": true
+    },
+    {
+      "path": "bench/programs/anchor/interest-bearing",
+      "framework": "anchor",
+      "program_type": "token-program",
+      "in_kb": false,
+      "all_clean": true
+    },
+    {
+      "path": "bench/programs/anchor/token-swap",
+      "framework": "anchor",
+      "program_type": "amm",
+      "in_kb": false,
+      "all_clean": true
+    },
+    {
+      "path": "bench/programs/quasar/escrow",
+      "framework": "quasar",
+      "program_type": "other",
+      "in_kb": false,
+      "all_clean": true
+    },
+    {
+      "path": "bench/programs/native/non-transferable-native",
+      "framework": "native",
+      "program_type": "token-program",
+      "in_kb": false,
+      "all_clean": true
+    },
+    {
+      "path": "bench/programs/native/multiple-extensions-native",
+      "framework": "native",
+      "program_type": "token-program",
+      "in_kb": false,
+      "all_clean": true
+    },
+    {
+      "path": "bench/programs/pinocchio",
+      "framework": "pinocchio",
+      "program_type": "other",
+      "in_kb": false,
+      "all_clean": true
+    },
+    {
+      "path": "bench/programs/anchor/external-delegate-token-master",
+      "framework": "anchor",
+      "program_type": "token-program",
+      "in_kb": false,
+      "all_clean": true
+    },
+    {
+      "path": "bench/programs/real/whirlpool",
+      "framework": "anchor",
+      "program_type": "amm",
+      "in_kb": true,
+      "all_clean": true
+    },
+    {
+      "path": "bench/programs/real/cp-amm",
+      "framework": "anchor",
+      "program_type": "amm",
+      "in_kb": true,
+      "all_clean": true
+    },
+    {
+      "path": "bench/programs/real/squads_multisig_program",
+      "framework": "anchor",
+      "program_type": "multisig",
+      "in_kb": true,
+      "all_clean": true
+    }
+  ]
+}

@@ -10,34 +10,41 @@ impl Parser for PinocchioParser {
         let lines: Vec<&str> = source.lines().collect();
         let mut handlers = Vec::new();
         let mut i = 0;
-
         while i < lines.len() {
             let trimmed = lines[i].trim();
-            if is_process_method(trimmed) {
-                if let Some(h) = parse_process_method(&lines, i, source_path) {
+            if (trimmed.contains("fn process(") || trimmed.contains("fn process<"))
+                && let Some(h) = parse_process_method(&lines, i, source_path) {
                     handlers.push(h);
                 }
+            else if trimmed.starts_with("pub fn process") || trimmed.starts_with("fn process") {
+                let sig = crate::parser::gather_signature(&lines, i);
+                if (sig.contains("AccountView") || sig.contains("AccountInfo"))
+                    && let Some(h) = parse_process_fn(&lines, i, &sig, source_path) {
+                        handlers.push(h);
+                    }
             }
-            if is_process_fn(trimmed) {
-                if let Some(h) = parse_process_fn(&lines, i, source_path) {
-                    handlers.push(h);
-                }
-            }
-
             i += 1;
         }
         handlers
     }
 }
 
-fn is_process_method(line: &str) -> bool {
-    (line.contains("fn process(") || line.contains("fn process<"))
-        && !line.contains("process_instruction")
-}
-
-fn is_process_fn(line: &str) -> bool {
-    (line.starts_with("pub fn process_") || line.starts_with("fn process_"))
-        && line.contains("AccountInfo")
+// accept the gathered sig; delete the old `let sig = lines[sig_line].trim();`
+fn parse_process_fn(lines: &[&str], sig_line: usize, sig: &str, source_path: &str)
+    -> Option<InstructionHandler>
+{
+    let name = extract_fn_name(sig)?;
+    let body_end = find_body_end(lines, sig_line);
+    let body_text = lines[sig_line..body_end.min(lines.len())].join("\n");
+    let accounts = extract_accounts_from_body(&body_text);
+    let doc_comment = extract_doc_comment(lines, sig_line);
+    Some(InstructionHandler {
+        name: name.into_boxed_str(), accounts, args: Vec::new(),
+        arithmetic: extract_arithmetic(&body_text),
+        cpi_calls: extract_cpi_calls(&body_text),
+        doc_comment: doc_comment.map(|s| s.into_boxed_str()),
+        source_file: source_path.into(),
+    })
 }
 
 fn parse_process_method(
@@ -57,31 +64,6 @@ fn parse_process_method(
     Some(InstructionHandler {
         name:        name.into_boxed_str(),
         accounts:    try_from_accounts,
-        args:        Vec::new(),
-        arithmetic:  extract_arithmetic(&body_text),
-        cpi_calls:   extract_cpi_calls(&body_text),
-        doc_comment: doc_comment.map(|s| s.into_boxed_str()),
-        source_file: source_path.into(),
-    })
-}
-
-fn parse_process_fn(
-    lines:       &[&str],
-    sig_line:    usize,
-    source_path: &str,
-) -> Option<InstructionHandler> {
-    let sig  = lines[sig_line].trim();
-    let name = extract_fn_name(sig)?;
-
-    let body_end  = find_body_end(lines, sig_line);
-    let body_text = lines[sig_line..body_end.min(lines.len())].join("\n");
-
-    let accounts    = extract_accounts_from_body(&body_text);
-    let doc_comment = extract_doc_comment(lines, sig_line);
-
-    Some(InstructionHandler {
-        name:        name.into_boxed_str(),
-        accounts,
         args:        Vec::new(),
         arithmetic:  extract_arithmetic(&body_text),
         cpi_calls:   extract_cpi_calls(&body_text),
@@ -140,8 +122,8 @@ fn extract_accounts_from_body(body: &str) -> Vec<AccountDecl> {
         let t = line.trim();
         if t.starts_with("//") { continue; }
 
-        if let Some(name) = extract_account_let(t) {
-            if seen.insert(name.clone()) {
+        if let Some(name) = extract_account_let(t)
+            && seen.insert(name.clone()) {
                 let has_signer_check = body.contains(&format!("{}.is_signer()", name))
                     || body.contains(&format!("!{}.is_signer()", name));
                 let has_owner_check = body.contains(&format!("{}.owner()", name))
@@ -164,7 +146,6 @@ fn extract_accounts_from_body(body: &str) -> Vec<AccountDecl> {
                     raw_constraint: None,
                 });
             }
-        }
     }
 
     accounts
@@ -180,11 +161,10 @@ fn extract_account_let(line: &str) -> Option<String> {
         .trim_start_matches("mut ")
         .trim()
         .to_string();
-    if line.contains("account") || line.contains("iter") || line.contains("accounts[") {
-        if !name.is_empty() && !name.contains(':') {
+    if (line.contains("account") || line.contains("iter") || line.contains("accounts["))
+        && !name.is_empty() && !name.contains(':') {
             return Some(name);
         }
-    }
     None
 }
 
@@ -263,7 +243,7 @@ fn extract_cpi_calls(body: &str) -> Vec<CpiCall> {
             .map(|i| t[i+1..].trim().trim_start_matches('&').split_whitespace().next().unwrap_or("unknown").trim_end_matches(',').to_string())
             .unwrap_or_else(|| "unknown".to_string());
         let verified = body.contains(&format!("{}.key()", program_account))
-            || body.contains(&format!("pinocchio_token::ID"));
+            || body.contains(&"pinocchio_token::ID".to_string());
         calls.push(CpiCall {
             program_account: program_account.into_boxed_str(),
             program_verified: verified,

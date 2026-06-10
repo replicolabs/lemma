@@ -14,37 +14,36 @@ use crate::{checker::rules::gap, types::{InstructionHandler, SecurityGap, Severi
 pub fn check(handlers: &[InstructionHandler]) -> Vec<SecurityGap> {
     let mut gaps = Vec::new();
     for handler in handlers {
-        for account in &handler.accounts {
-            let uses_close = account
-                .raw_constraint.as_deref()
-                .map(|c| c.contains("close ="))
-                .unwrap_or(false);
-            if !account.is_mutable || uses_close {
-                continue;
-            }
-            let handler_name_lower = handler.name.to_ascii_lowercase();
-            let is_close_handler = handler_name_lower.contains("close")
-                || handler_name_lower.contains("delete")
-                || handler_name_lower.contains("destroy")
-                || handler_name_lower.contains("terminate");
-
-            if is_close_handler {
-                gaps.push(gap(
-                    &handler.name,
-                    VulnClass::LifecycleViolation,
-                    Severity::High,
-                    format!(
-                        "Handler `{}` appears to close accounts but account `{}` does \
-                         not use Anchor's `close` constraint. Without `close`, the \
-                         account discriminator is not cleared and the account can be \
-                         revived in a multi-instruction transaction. Use \
-                         `#[account(mut, close = destination)]`.",
-                        handler.name, account.name,
-                    ),
-                    "DC-010",
-                ));
-            }
+        let lower = handler.name.to_ascii_lowercase();
+        if !lower.contains("close") && !lower.contains("delete")
+            && !lower.contains("destroy") && !lower.contains("terminate")
+        {
+            continue;
         }
+        let has_anchor_close = handler.accounts.iter().any(|a| {
+            a.raw_constraint.as_deref().map(|c| c.contains("close =")).unwrap_or(false)
+        });
+        if has_anchor_close { continue; }
+
+        let has_typed_mutable = handler.accounts.iter().any(|a| {
+            a.is_mutable && a.has_owner && !a.is_unchecked
+        });
+        if !has_typed_mutable { continue; }
+
+        gaps.push(gap(
+            &handler.name,
+            VulnClass::LifecycleViolation,
+            Severity::Medium,
+            format!(
+                "Handler `{}` closes an account but no account uses Anchor's \
+                 `close = <destination>` constraint. Without it the discriminator \
+                 is not cleared and the account can be revived within the same \
+                 transaction. Add `#[account(mut, close = destination)]` to the \
+                 account being closed.",
+                handler.name,
+            ),
+            "DC-010",
+        ));
     }
     gaps
 }

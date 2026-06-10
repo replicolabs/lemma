@@ -17,7 +17,10 @@ const TOKEN_KEYWORDS: &[&str] = &[
     "supply", "vault", "deposit", "withdraw",
 ];
 
-pub fn check(handlers: &[InstructionHandler]) -> Vec<SecurityGap> {
+pub fn check(handlers: &[InstructionHandler], source: &str) -> Vec<SecurityGap> {
+    if source.contains("overflow-checks = true") || source.contains("overflow_checks = true") {
+        return Vec::new();
+    }
     let mut gaps = Vec::new();
     for handler in handlers {
         for op in &handler.arithmetic {

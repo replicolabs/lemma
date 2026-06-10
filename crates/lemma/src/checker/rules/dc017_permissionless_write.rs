@@ -12,15 +12,12 @@ use crate::{checker::rules::gap, types::{InstructionHandler, SecurityGap, Severi
 pub fn check(handlers: &[InstructionHandler]) -> Vec<SecurityGap> {
     let mut gaps = Vec::new();
     for handler in handlers {
-        // Skip handlers that have no mutable state accounts.
         let has_mutable_state = handler.accounts.iter().any(|a| {
-            a.is_mutable && a.has_owner && !a.is_pda
+            a.is_mutable && a.has_owner && !a.is_pda && !a.is_unchecked
         });
         if !has_mutable_state {
             continue;
         }
-
-        // Check if any account provides access control.
         let has_access_control = handler.accounts.iter().any(|a| {
             a.has_signer || a.has_has_one
         });
@@ -28,7 +25,6 @@ pub fn check(handlers: &[InstructionHandler]) -> Vec<SecurityGap> {
             continue;
         }
 
-        // Exclude handlers that look intentionally permissionless.
         let handler_lower = handler.name.to_ascii_lowercase();
         let intentionally_permissionless = handler_lower.contains("permissionless")
             || handler_lower.contains("crank")
@@ -41,7 +37,7 @@ pub fn check(handlers: &[InstructionHandler]) -> Vec<SecurityGap> {
         gaps.push(gap(
             &handler.name,
             VulnClass::PermissionlessStateWrite,
-            Severity::Critical,
+            Severity::High,
             format!(
                 "Handler `{}` writes to mutable state accounts but has no signer \
                  constraint or authority binding. Any account can call this instruction \

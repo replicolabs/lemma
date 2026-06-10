@@ -44,7 +44,7 @@ fn write_handler_block(out: &mut String, inv: &HandlerInvariants) {
     } else {
         if !inv.natural_language.is_empty() {
             writeln!(out, "  // {}", inv.natural_language).ok();
-            if inv.grounded_in.len() > 0 {
+            if !inv.grounded_in.is_empty() {
                 writeln!(out, "  // Grounded in: {}", inv.grounded_in).ok();
             }
             writeln!(out, "  // Confidence: {:.0}%", inv.confidence * 100.0).ok();
@@ -83,7 +83,7 @@ fn write_clause(out: &mut String, clause: &QedSpecClause, kani_valid: bool) {
 }
 
 fn to_pascal_case(s: &str) -> String {
-    s.split(|c| c == '_' || c == '-')
+    s.split(['_', '-'])
         .filter(|w| !w.is_empty())
         .map(|w| {
             let mut chars = w.chars();

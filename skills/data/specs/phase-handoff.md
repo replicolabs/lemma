@@ -36,7 +36,6 @@ re-running analysis.
 **Program:** my_program
 **Framework:** anchor
 **Program type:** amm
-**Security score:** 74/100
 **Lemma version:** 0.1.0
 **KB version:** 2026.06.01.982ebd3
 **Timestamp:** 2026-06-01T10:00:00Z

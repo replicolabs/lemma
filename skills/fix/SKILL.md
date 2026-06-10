@@ -152,13 +152,11 @@ Confirm the gap no longer appears in the output.
 
 **Step 12.** Update the analysis context.
 
-The re-run updates `.lemma/analysis-context.md` automatically. Confirm
-the security score improved.
+The re-run updates `.lemma/analysis-context.md` automatically. 
 
 **Step 13.** Summarise what was done.
 
 Tell the developer:
 - Which gap was fixed
 - What the code change was
-- What the new security score is
 - How many gaps remain

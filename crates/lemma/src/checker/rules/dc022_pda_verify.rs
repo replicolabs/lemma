@@ -33,14 +33,17 @@ pub fn check(handlers: &[InstructionHandler]) -> Vec<SecurityGap> {
             if !looks_like_pda {
                 continue;
             }
-            if account.is_pda {
-                continue;
-            }
+            if account.is_pda || account.has_has_one { continue; }
+            if account.type_str.contains("TokenAccount")
+                || account.type_str.contains("InterfaceAccount") { continue; }
+            if let Some(c) = account.raw_constraint.as_deref()
+                && (c.contains("address =") || c.contains("seeds")
+                    || c.contains("associated_token") || c.contains("token::")) { continue; }
             if account.has_owner && !account.is_unchecked {
                 gaps.push(gap(
                     &handler.name,
                     VulnClass::InitWithoutPda,
-                    Severity::High,
+                    Severity::Medium,
                     format!(
                         "Account `{}` in handler `{}` appears to be a PDA but has no \
                          `seeds` constraint to verify its derivation. Without seeds \

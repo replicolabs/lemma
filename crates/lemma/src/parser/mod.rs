@@ -112,3 +112,15 @@ pub fn parse(
         Framework::Native    => native::NativeParser.parse(source, source_label),
     }
 }
+
+pub(crate) fn gather_signature(lines: &[&str], start: usize) -> String {
+    let mut sig = String::new();
+    for line in lines.iter().skip(start).take(20) {
+        sig.push_str(line.trim());
+        sig.push(' ');
+        if line.contains('{') || line.trim_end().ends_with(';') {
+            break;
+        }
+    }
+    sig
+}

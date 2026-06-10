@@ -158,7 +158,6 @@ impl fmt::Display for VulnClass {
     }
 }
 
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Severity {

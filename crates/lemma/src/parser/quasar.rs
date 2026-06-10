@@ -21,12 +21,11 @@ fn extract_accounts_structs(source: &str) -> AccountsMap {
 
     while i < lines.len() {
         let trimmed = lines[i].trim();
-        if trimmed.contains("derive") && trimmed.contains("Accounts") {
-            if let Some(name) = find_struct_name(&lines, i + 1) {
+        if trimmed.contains("derive") && trimmed.contains("Accounts")
+            && let Some(name) = find_struct_name(&lines, i + 1) {
                 let accounts = extract_struct_fields(&lines, i + 1);
                 map.insert(name, accounts);
             }
-        }
         i += 1;
     }
     map
@@ -76,6 +75,11 @@ fn extract_struct_fields(lines: &[&str], start: usize) -> Vec<AccountDecl> {
 
         if trimmed.starts_with("#[account(") {
             pending = Some(trimmed.to_string());
+            continue;
+        }
+        
+        if pending.is_some() && !trimmed.starts_with("pub ") && !trimmed.starts_with("#[") {
+            if let Some(ref mut c) = pending { c.push(' '); c.push_str(trimmed); }
             continue;
         }
 
@@ -142,7 +146,7 @@ fn extract_auth_field(constraint: &str) -> Option<String> {
 fn extract_has_one_field(constraint: &str) -> Option<String> {
     let start = constraint.find("has_one")? + "has_one".len();
     let rest  = constraint[start..].trim().strip_prefix('=')?;
-    let field = rest.trim().split_whitespace().next()?.trim_end_matches(',').to_string();
+    let field = rest.split_whitespace().next()?.trim_end_matches(',').to_string();
     Some(field)
 }
 
@@ -164,11 +168,9 @@ fn extract_handlers(
         let trimmed = lines[i].trim();
         if (trimmed.starts_with("pub fn ") || trimmed.starts_with("pub async fn "))
             && (trimmed.contains("Ctx<") || trimmed.contains("&Ctx<"))
-        {
-            if let Some(h) = parse_handler(&lines, i, source_path, accounts_map) {
+            && let Some(h) = parse_handler(&lines, i, source_path, accounts_map) {
                 handlers.push(h);
             }
-        }
         i += 1;
     }
     handlers

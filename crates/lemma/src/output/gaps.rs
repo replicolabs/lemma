@@ -38,17 +38,6 @@ fn write_score_banner<W: Write>(result: &AnalysisResult, w: &mut W) -> std::io::
     )?;
     writeln!(w)?;
 
-    let score = result.security_score;
-    let score_str = format!("  Security Score: {}/100", score);
-    let score_coloured = match score {
-        90..=100 => score_str.green().bold().to_string(),
-        70..=89  => score_str.yellow().bold().to_string(),
-        50..=69  => score_str.truecolor(255, 165, 0).bold().to_string(),
-        _        => score_str.red().bold().to_string(),
-    };
-    writeln!(w, "{}", score_coloured)?;
-    writeln!(w)?;
-
     Ok(())
 }
 

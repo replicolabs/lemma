@@ -10,13 +10,14 @@ impl Parser for NativeParser {
         let lines: Vec<&str> = source.lines().collect();
         let mut handlers = Vec::new();
         let mut i = 0;
-
         while i < lines.len() {
             let trimmed = lines[i].trim();
-            if is_handler_signature(trimmed) {
-                if let Some(h) = parse_handler(&lines, i, source_path) {
-                    handlers.push(h);
-                }
+            if trimmed.starts_with("pub fn ") || trimmed.starts_with("fn ") {
+                let sig = crate::parser::gather_signature(&lines, i);
+                if is_handler_signature(&sig)
+                    && let Some(h) = parse_handler(&lines, i, &sig, source_path) {
+                        handlers.push(h);
+                    }
             }
             i += 1;
         }
@@ -24,34 +25,23 @@ impl Parser for NativeParser {
     }
 }
 
-fn is_handler_signature(line: &str) -> bool {
-    let is_pub_fn = line.starts_with("pub fn ") || line.starts_with("fn ");
-    let has_accounts = line.contains("&[AccountInfo") || line.contains("accounts: &[AccountInfo");
-    is_pub_fn && has_accounts
+fn is_handler_signature(sig: &str) -> bool {
+    (sig.starts_with("pub fn ") || sig.starts_with("fn ")) && sig.contains("&[AccountInfo")
 }
 
-fn parse_handler(
-    lines:       &[&str],
-    sig_line:    usize,
-    source_path: &str,
-) -> Option<InstructionHandler> {
-    let sig = lines[sig_line].trim();
+fn parse_handler(lines: &[&str], sig_line: usize, sig: &str, source_path: &str)
+    -> Option<InstructionHandler>
+{
     let name = extract_fn_name(sig)?;
-
     let body_end = find_body_end(lines, sig_line);
     let body_text = lines[sig_line..body_end.min(lines.len())].join("\n");
     let accounts = extract_accounts_from_body(&body_text);
-    let args      = extract_fn_args(sig);
+    let args = extract_fn_args(sig);
     let arithmetic = extract_arithmetic(&body_text);
-    let cpi_calls  = extract_cpi_calls(&body_text);
+    let cpi_calls = extract_cpi_calls(&body_text);
     let doc_comment = extract_doc_comment(lines, sig_line);
-
     Some(InstructionHandler {
-        name:        name.into_boxed_str(),
-        accounts,
-        args,
-        arithmetic,
-        cpi_calls,
+        name: name.into_boxed_str(), accounts, args, arithmetic, cpi_calls,
         doc_comment: doc_comment.map(|s| s.into_boxed_str()),
         source_file: source_path.into(),
     })
@@ -64,8 +54,8 @@ fn extract_accounts_from_body(body: &str) -> Vec<AccountDecl> {
     for line in body.lines() {
         let trimmed = line.trim();
         if trimmed.starts_with("//") { continue; }
-        if let Some(name) = extract_account_let(trimmed) {
-            if seen_names.insert(name.clone()) {
+        if let Some(name) = extract_account_let(trimmed)
+            && seen_names.insert(name.clone()) {
                 let has_signer = body.contains(&format!("{}.is_signer", name))
                     && body.contains(&format!("!{}.is_signer", name));
                 let has_owner = body.contains(&format!("{}.owner", name));
@@ -87,7 +77,6 @@ fn extract_accounts_from_body(body: &str) -> Vec<AccountDecl> {
                     raw_constraint: None,
                 });
             }
-        }
     }
 
     accounts
@@ -99,12 +88,11 @@ fn extract_account_let(line: &str) -> Option<String> {
         let name = rest.split('=').next()?.trim().trim_start_matches("mut ").trim().to_string();
         if !name.is_empty() { return Some(name); }
     }
-    if line.contains("accounts[") {
-        if let Some(rest) = line.strip_prefix("let ") {
+    if line.contains("accounts[")
+        && let Some(rest) = line.strip_prefix("let ") {
             let name = rest.split('=').next()?.trim().trim_start_matches("mut ").trim().to_string();
             if !name.is_empty() { return Some(name); }
         }
-    }
     None
 }
 

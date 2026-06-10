@@ -13,26 +13,26 @@ pub fn check(handlers: &[InstructionHandler]) -> Vec<SecurityGap> {
     let mut gaps = Vec::new();
     for handler in handlers {
         for account in &handler.accounts {
-            let uses_init_if_needed = account
-                .raw_constraint.as_deref()
-                .map(|c| c.contains("init_if_needed"))
-                .unwrap_or(false);
-            if uses_init_if_needed {
-                gaps.push(gap(
-                    &handler.name,
-                    VulnClass::InsecureInitialisation,
-                    Severity::High,
-                    format!(
-                        "Account `{}` uses `init_if_needed` which permits reinitialisation. \
-                         An attacker can call this instruction on an already-initialised \
-                         account and overwrite its state. Use `init` instead and add an \
-                         explicit is-already-initialised check if conditional initialisation \
-                         is required.",
-                        account.name,
-                    ),
-                    "DC-003",
-                ));
-            }
+            let c = account.raw_constraint.as_deref().unwrap_or("");
+            if !c.contains("init_if_needed") { continue; }
+            let is_token_like = account.type_str.contains("TokenAccount")
+                || account.type_str.contains("InterfaceAccount")
+                || account.type_str.contains("Mint")
+                || c.contains("associated_token");
+            if is_token_like { continue; }
+
+            gaps.push(gap(
+                &handler.name,
+                VulnClass::InsecureInitialisation,
+                Severity::Medium,
+                format!(
+                    "State account `{}` uses `init_if_needed`. If it holds authority or \
+                     configuration, an attacker may call this handler on an existing account \
+                     and reset it. Confirm there is a reinitialisation guard, or use `init`.",
+                    account.name,
+                ),
+                "DC-003",
+            ));
         }
     }
     gaps

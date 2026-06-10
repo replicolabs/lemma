@@ -36,14 +36,13 @@ Use when the user wants to:
 - Run a security check on their program
 - Find gaps in their Solana program
 - Generate formal invariants or a QEDSpec file
-- Get a security score for their program
 - Check if their program is safe to deploy
 - Re-run analysis after making changes
 - Compare their security posture before and after a fix
 
 Trigger phrases: "analyze", "check my program", "security gaps", "is this
 safe", "what vulnerabilities", "run lemma", "generate spec", "audit my
-program", "security score"
+program"
 
 ---
 

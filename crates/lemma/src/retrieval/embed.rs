@@ -61,6 +61,24 @@ pub async fn embed_batch(
     parse_response(response, texts.len()).await
 }
 
+pub async fn embed_query_batch(
+    texts: &[&str],
+    model: &str,
+    api_key: &str,
+) -> Result<Vec<Vec<f32>>> {
+    if texts.is_empty() { return Ok(Vec::new()); }
+    let client = build_client()?;
+    let body = EmbedRequest { model, input: texts, input_type: "query" };
+    let response = client
+        .post(VOYAGE_EMBED_URL)
+        .bearer_auth(api_key)
+        .json(&body)
+        .send()
+        .await
+        .context("failed to reach Voyage AI API")?;
+    parse_response(response, texts.len()).await
+}
+
 fn build_client() -> Result<Client> {
     Client::builder()
         .user_agent(USER_AGENT)

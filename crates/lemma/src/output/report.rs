@@ -69,17 +69,6 @@ fn write_executive_summary(out: &mut String, result: &AnalysisResult) {
         writeln!(out, "| ✅ Acknowledged | {} |", acked.len()).ok();
     }
     writeln!(out).ok();
-
-    let score = result.security_score;
-    let interpretation = match score {
-        90..=100 => "Strong security posture.",
-        70..=89  => "Good posture. Some gaps require attention before deployment.",
-        50..=69  => "Moderate risk. Multiple gaps present. Review before deployment.",
-        30..=49  => "Significant risk. Critical or multiple high gaps present. Do not deploy.",
-        _        => "Severe risk. Critical gaps present. Requires immediate remediation.",
-    };
-    writeln!(out, "**Score interpretation:** {}", interpretation).ok();
-    writeln!(out).ok();
 }
 
 fn write_gap_details(out: &mut String, result: &AnalysisResult) {

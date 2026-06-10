@@ -13,7 +13,6 @@ Replace all `{placeholder}` values with actual data from the analysis.
 | Program | `{program_name}` |
 | Framework | {framework} |
 | Program type | {program_type} |
-| Security score | **{score}/100** |
 | Lemma version | {lemma_version} |
 | Knowledge base | {kb_version} |
 | Analysis date | {date} |
@@ -45,7 +44,6 @@ Replace all `{placeholder}` values with actual data from the analysis.
 | ⚪ Informational | {info_count} |
 | ✅ Acknowledged | {acked_count} |
 
-**Score interpretation:** {score_interpretation}
 
 ---
 
@@ -116,26 +114,3 @@ Knowledge base {kb_version} | {date}*
 ```
 
 ---
-
-## Score Interpretation Text
-
-Copy the appropriate text based on the score:
-
-**90-100:** "The program demonstrates a strong security posture.
-Remaining gaps are low priority and do not block deployment. Continue
-monitoring and re-run analysis after any significant code changes."
-
-**70-89:** "The program has a good security foundation with specific
-gaps that should be addressed before mainnet deployment. Fix all high
-severity gaps before proceeding."
-
-**50-69:** "The program has a moderate risk level with multiple gaps
-requiring attention. Critical and high severity gaps must be fixed
-before deployment. Schedule a focused remediation sprint."
-
-**30-49:** "The program has significant vulnerabilities that pose a
-serious risk to funds and protocol integrity. Do not deploy until
-all critical and high severity gaps are remediated and re-verified."
-
-**0-29:** "The program has critical vulnerabilities. Deployment is not
-recommended. Immediate remediation is required."

@@ -32,7 +32,7 @@ programs often persist to production."
 Respond: "A previous audit is valuable. This analysis may catch things
 that were added since the audit, or patterns the auditor's tooling
 missed. Would you like to acknowledge this gap with the reason
-'reviewed by auditor' so it is recorded but not counted in the score?"
+'reviewed by auditor' so it is recorded?"
 
 ---
 
@@ -53,9 +53,10 @@ Record the outcome for every gap. Do not leave gaps without a decision.
 
 When presenting a gap's evidence, state the quality tier:
 
-**Tier 1 — Deterministic:** "This was found by the Lemma checker rule
-DC-002. The checker verified that [account] has no signer constraint.
-Zero false positives for this specific pattern."
+**Tier 1 — Deterministic:** "This was flagged by Lemma rule DC-002 because
+[account] has no signer constraint in the accounts struct. Deterministic
+rules are high-recall heuristics — confirm against the handler body that no
+signer check happens elsewhere before treating this as real."
 
 **Tier 2 — Professional audit evidence:** "This pattern matches HAL-GFXHAL-01,
 a finding from the Halborn audit of GooseFX Swap in 2023. Halborn found

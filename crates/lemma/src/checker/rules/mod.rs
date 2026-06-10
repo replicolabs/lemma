@@ -12,17 +12,14 @@ pub mod dc011_sysvar;
 pub mod dc012_token2022_transfer;
 pub mod dc013_has_one;
 pub mod dc014_lamport_griefing;
-pub mod dc015_lifecycle_status;
 pub mod dc016_one_shot;
 pub mod dc017_permissionless_write;
-pub mod dc018_cpi_identity;
 pub mod dc019_stored_field;
 pub mod dc020_authority_revoke;
 pub mod dc021_paired_validator;
 pub mod dc022_pda_verify;
 
 use crate::types::{GapSource, SecurityGap, Severity, VulnClass};
-
 
 pub(super) fn gap(
     handler_name:   &str,
