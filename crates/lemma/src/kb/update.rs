@@ -1,12 +1,12 @@
-use anyhow::{bail, Context, Result};
+use anyhow::{Context, Result, bail};
+use futures_util::StreamExt;
 use indicatif::{ProgressBar, ProgressStyle};
 use reqwest::Client;
 use sha2::{Digest, Sha256};
 use std::time::Duration;
 use tokio::io::AsyncWriteExt;
-use futures_util::StreamExt;
 
-use crate::config::{kb_lock_path, kb_path, Config, KB_LATEST_VERSION_URL, KbLock};
+use crate::config::{Config, KB_LATEST_VERSION_URL, KbLock, kb_lock_path, kb_path};
 
 const VERSION_CHECK_TIMEOUT: Duration = Duration::from_secs(10);
 const DOWNLOAD_TIMEOUT: Duration = Duration::from_secs(120);
@@ -17,7 +17,7 @@ pub async fn run(config: &mut Config, force: bool) -> Result<()> {
     println!("Checking for knowledge base updates…");
 
     let remote_version = fetch_latest_version(&client).await?;
-    let local_version  = config.kb.version.as_deref().unwrap_or("none");
+    let local_version = config.kb.version.as_deref().unwrap_or("none");
 
     if !force && remote_version == local_version {
         println!(
@@ -28,10 +28,7 @@ pub async fn run(config: &mut Config, force: bool) -> Result<()> {
     }
 
     if local_version != "none" {
-        println!(
-            "Updating: {} → {}",
-            local_version, remote_version
-        );
+        println!("Updating: {} → {}", local_version, remote_version);
     } else {
         println!("Downloading knowledge base version {}…", remote_version);
     }
@@ -42,9 +39,7 @@ pub async fn run(config: &mut Config, force: bool) -> Result<()> {
     if let Some(parent) = kb_path.parent() {
         tokio::fs::create_dir_all(parent)
             .await
-            .with_context(|| {
-                format!("failed to create lemma directory at {}", parent.display())
-            })?;
+            .with_context(|| format!("failed to create lemma directory at {}", parent.display()))?;
     }
 
     let mut file = tokio::fs::File::create(&kb_path)
@@ -55,13 +50,17 @@ pub async fn run(config: &mut Config, force: bool) -> Result<()> {
         .await
         .with_context(|| format!("failed to write knowledge base to {}", kb_path.display()))?;
 
-    file.flush().await.context("failed to flush knowledge base file")?;
+    file.flush()
+        .await
+        .context("failed to flush knowledge base file")?;
     config.set_kb_version(&remote_version, &sha256_hex);
-    config.save().context("failed to save config after kb update")?;
+    config
+        .save()
+        .context("failed to save config after kb update")?;
     let lock = KbLock {
-        version:       remote_version.clone(),
-        url:           config.kb_download_url().to_string(),
-        sha256:        sha256_hex.clone(),
+        version: remote_version.clone(),
+        url: config.kb_download_url().to_string(),
+        sha256: sha256_hex.clone(),
         downloaded_at: chrono::Utc::now().to_rfc3339(),
     };
     if let Ok(lock_path) = kb_lock_path() {
@@ -73,14 +72,10 @@ pub async fn run(config: &mut Config, force: bool) -> Result<()> {
         remote_version,
         bytes.len() as f64 / 1_048_576.0,
     );
-    println!(
-        "  SHA-256: {}",
-        &sha256_hex[..16]
-    );
+    println!("  SHA-256: {}", &sha256_hex[..16]);
 
     Ok(())
 }
-
 
 fn build_client() -> Result<Client> {
     Client::builder()
@@ -117,27 +112,22 @@ async fn fetch_latest_version(client: &Client) -> Result<String> {
 
     let version = text.trim().to_string();
     if version.is_empty() {
-        bail!("remote version file is empty — this is a bug in the knowledge base release pipeline");
+        bail!(
+            "remote version file is empty — this is a bug in the knowledge base release pipeline"
+        );
     }
 
     Ok(version)
 }
 
-async fn download_with_progress(
-    client: &Client,
-    url:    &str,
-) -> Result<(Vec<u8>, String)> {
-    let response = client
-        .get(url)
-        .send()
-        .await
-        .with_context(|| {
-            format!(
-                "failed to download knowledge base from {}.\n\
+async fn download_with_progress(client: &Client, url: &str) -> Result<(Vec<u8>, String)> {
+    let response = client.get(url).send().await.with_context(|| {
+        format!(
+            "failed to download knowledge base from {}.\n\
                  Check your internet connection.",
-                url
-            )
-        })?;
+            url
+        )
+    })?;
 
     if !response.status().is_success() {
         let status = response.status();
@@ -152,9 +142,9 @@ async fn download_with_progress(
     let content_length = response.content_length();
     let pb = build_progress_bar(content_length);
 
-    let mut hasher  = Sha256::new();
-    let capacity    = content_length.unwrap_or(2 * 1024 * 1024) as usize;
-    let mut buf     = Vec::with_capacity(capacity);
+    let mut hasher = Sha256::new();
+    let capacity = content_length.unwrap_or(2 * 1024 * 1024) as usize;
+    let mut buf = Vec::with_capacity(capacity);
 
     let mut stream = response.bytes_stream();
 
@@ -167,18 +157,17 @@ async fn download_with_progress(
 
     pb.finish_and_clear();
 
-    let digest  = hasher.finalize();
-    let hex     = hex::encode(digest);
+    let digest = hasher.finalize();
+    let hex = hex::encode(digest);
 
     Ok((buf, hex))
 }
 
 fn validate_json(bytes: &[u8]) -> Result<()> {
-    serde_json::from_slice::<serde_json::Value>(bytes)
-        .context(
-            "downloaded file is not valid JSON — the release may be corrupted.\n\
+    serde_json::from_slice::<serde_json::Value>(bytes).context(
+        "downloaded file is not valid JSON — the release may be corrupted.\n\
              Try running `lemma kb update` again.",
-        )?;
+    )?;
     Ok(())
 }
 

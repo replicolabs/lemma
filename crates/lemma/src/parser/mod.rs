@@ -3,10 +3,9 @@ pub mod native;
 pub mod pinocchio;
 pub mod quasar;
 
+use crate::types::{Framework, InstructionHandler};
 use anyhow::{Context, Result};
 use std::path::Path;
-use crate::types::{Framework, InstructionHandler};
-
 
 pub trait Parser {
     fn parse(&self, source: &str, source_path: &str) -> Vec<InstructionHandler>;
@@ -56,19 +55,14 @@ fn load_source_dir(dir: &Path) -> Result<(String, String)> {
     collect_rs_files(dir, &mut rs_files);
 
     if rs_files.is_empty() {
-        anyhow::bail!(
-            "no .rs files found under {}",
-            dir.display()
-        );
+        anyhow::bail!("no .rs files found under {}", dir.display());
     }
 
     rs_files.sort();
 
     let mut buf = String::new();
     for file_path in &rs_files {
-        let relative = file_path
-            .strip_prefix(dir)
-            .unwrap_or(file_path.as_path());
+        let relative = file_path.strip_prefix(dir).unwrap_or(file_path.as_path());
 
         buf.push_str("// FILE: ");
         buf.push_str(&relative.display().to_string());
@@ -85,7 +79,9 @@ fn load_source_dir(dir: &Path) -> Result<(String, String)> {
 }
 
 fn collect_rs_files(dir: &Path, out: &mut Vec<std::path::PathBuf>) {
-    let Ok(entries) = std::fs::read_dir(dir) else { return };
+    let Ok(entries) = std::fs::read_dir(dir) else {
+        return;
+    };
     for entry in entries.flatten() {
         let path = entry.path();
         if path.is_dir() {
@@ -100,16 +96,12 @@ fn collect_rs_files(dir: &Path, out: &mut Vec<std::path::PathBuf>) {
     }
 }
 
-pub fn parse(
-    source:       &str,
-    source_label: &str,
-    framework:    Framework,
-) -> Vec<InstructionHandler> {
+pub fn parse(source: &str, source_label: &str, framework: Framework) -> Vec<InstructionHandler> {
     match framework {
-        Framework::Anchor    => anchor::AnchorParser.parse(source, source_label),
-        Framework::Quasar    => quasar::QuasarParser.parse(source, source_label),
+        Framework::Anchor => anchor::AnchorParser.parse(source, source_label),
+        Framework::Quasar => quasar::QuasarParser.parse(source, source_label),
         Framework::Pinocchio => pinocchio::PinocchioParser.parse(source, source_label),
-        Framework::Native    => native::NativeParser.parse(source, source_label),
+        Framework::Native => native::NativeParser.parse(source, source_label),
     }
 }
 

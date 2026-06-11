@@ -9,12 +9,26 @@
 //! overflow in release builds, producing incorrect balances, fees,
 //! or output amounts.
 
-use crate::{checker::rules::gap, types::{InstructionHandler, SecurityGap, Severity, VulnClass}};
+use crate::{
+    checker::rules::gap,
+    types::{InstructionHandler, SecurityGap, Severity, VulnClass},
+};
 
 const TOKEN_KEYWORDS: &[&str] = &[
-    "amount", "balance", "fee", "collateral", "reserve",
-    "debt", "lamport", "token", "liquidity", "price",
-    "supply", "vault", "deposit", "withdraw",
+    "amount",
+    "balance",
+    "fee",
+    "collateral",
+    "reserve",
+    "debt",
+    "lamport",
+    "token",
+    "liquidity",
+    "price",
+    "supply",
+    "vault",
+    "deposit",
+    "withdraw",
 ];
 
 pub fn check(handlers: &[InstructionHandler], source: &str) -> Vec<SecurityGap> {
@@ -28,7 +42,7 @@ pub fn check(handlers: &[InstructionHandler], source: &str) -> Vec<SecurityGap> 
                 continue;
             }
             if op.op == '/' {
-                continue; 
+                continue;
             }
             if involves_token_variable(&op.lhs) || involves_token_variable(&op.rhs) {
                 let severity = if op.op == '*' {
@@ -45,8 +59,12 @@ pub fn check(handlers: &[InstructionHandler], source: &str) -> Vec<SecurityGap> 
                          In release builds without overflow-checks this silently wraps. \
                          Use `checked_{}` or `saturating_{}`, or enable \
                          `overflow-checks = true` in [profile.release].",
-                        op.op, op.lhs, op.rhs, handler.name,
-                        op_name(op.op), op_name(op.op),
+                        op.op,
+                        op.lhs,
+                        op.rhs,
+                        handler.name,
+                        op_name(op.op),
+                        op_name(op.op),
                     ),
                     "DC-006",
                 ));
@@ -62,5 +80,10 @@ fn involves_token_variable(name: &str) -> bool {
 }
 
 fn op_name(op: char) -> &'static str {
-    match op { '+' => "add", '-' => "sub", '*' => "mul", _ => "div" }
+    match op {
+        '+' => "add",
+        '-' => "sub",
+        '*' => "mul",
+        _ => "div",
+    }
 }

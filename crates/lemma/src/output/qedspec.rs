@@ -1,9 +1,9 @@
-use std::fmt::Write;
 use crate::types::{HandlerInvariants, QedSpecClause};
+use std::fmt::Write;
 
 pub fn generate(
-    program_name:   &str,
-    program_id:     Option<&str>,
+    program_name: &str,
+    program_id: Option<&str>,
     invariants_list: &[HandlerInvariants],
 ) -> String {
     let mut out = String::with_capacity(2048);
@@ -21,7 +21,9 @@ pub fn generate(
     out.push('\n');
 
     if invariants_list.is_empty() {
-        out.push_str("// No handlers found — ensure the parser detected your instruction functions.\n");
+        out.push_str(
+            "// No handlers found — ensure the parser detected your instruction functions.\n",
+        );
         return out;
     }
     for handler_inv in invariants_list {
@@ -71,12 +73,15 @@ fn write_clause(out: &mut String, clause: &QedSpecClause, kani_valid: bool) {
     let commented = !kani_valid;
     let prefix = if commented { "  // [INVALID] " } else { "  " };
     let line = match clause.clause_type.as_ref() {
-        "guard"       => format!("{}guard {}", prefix, clause.expression),
-        "requires"    => format!("{}requires {}", prefix, clause.expression),
-        "ensures"     => format!("{}ensures {}", prefix, clause.expression),
-        "invariant"   => format!("{}invariant {}", prefix, clause.expression),
+        "guard" => format!("{}guard {}", prefix, clause.expression),
+        "requires" => format!("{}requires {}", prefix, clause.expression),
+        "ensures" => format!("{}ensures {}", prefix, clause.expression),
+        "invariant" => format!("{}invariant {}", prefix, clause.expression),
         "establishes" => format!("{}establishes {}", prefix, clause.expression),
-        other         => format!("{}// unknown clause_type '{}': {}", prefix, other, clause.expression),
+        other => format!(
+            "{}// unknown clause_type '{}': {}",
+            prefix, other, clause.expression
+        ),
     };
 
     writeln!(out, "{}", line).ok();
@@ -88,17 +93,14 @@ fn to_pascal_case(s: &str) -> String {
         .map(|w| {
             let mut chars = w.chars();
             match chars.next() {
-                None    => String::new(),
+                None => String::new(),
                 Some(c) => c.to_uppercase().to_string() + chars.as_str(),
             }
         })
         .collect()
 }
 
-pub fn write_to_file(
-    path:    &std::path::Path,
-    content: &str,
-) -> anyhow::Result<()> {
+pub fn write_to_file(path: &std::path::Path, content: &str) -> anyhow::Result<()> {
     std::fs::write(path, content)
         .map_err(|e| anyhow::anyhow!("failed to write qedspec to {}: {}", path.display(), e))
 }

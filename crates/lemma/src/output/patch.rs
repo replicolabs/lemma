@@ -34,7 +34,7 @@ pub fn apply_to_file(path: &Path, diff: &str) -> Result<()> {
 
 pub fn apply_unified_diff(source: &str, diff: &str) -> Result<String> {
     let source_lines: Vec<&str> = source.lines().collect();
-    let mut result: Vec<&str>   = Vec::with_capacity(source_lines.len() + 16);
+    let mut result: Vec<&str> = Vec::with_capacity(source_lines.len() + 16);
     let mut source_pos = 0usize;
 
     for hunk in parse_hunks(diff) {
@@ -86,11 +86,15 @@ pub fn apply_unified_diff(source: &str, diff: &str) -> Result<String> {
 #[derive(Debug)]
 struct Hunk<'a> {
     orig_start: usize,
-    changes:    Vec<Change<'a>>,
+    changes: Vec<Change<'a>>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum ChangeKind { Context, Add, Remove }
+enum ChangeKind {
+    Context,
+    Add,
+    Remove,
+}
 
 #[derive(Debug)]
 struct Change<'a> {
@@ -108,14 +112,26 @@ fn parse_hunks(diff: &str) -> Vec<Hunk<'_>> {
                 hunks.push(h);
             }
             let orig_start = parse_hunk_header(line).unwrap_or(1);
-            current = Some(Hunk { orig_start, changes: Vec::new() });
+            current = Some(Hunk {
+                orig_start,
+                changes: Vec::new(),
+            });
         } else if let Some(ref mut hunk) = current {
             if let Some(text) = line.strip_prefix('+') {
-                hunk.changes.push(Change { kind: ChangeKind::Add, text });
+                hunk.changes.push(Change {
+                    kind: ChangeKind::Add,
+                    text,
+                });
             } else if let Some(text) = line.strip_prefix('-') {
-                hunk.changes.push(Change { kind: ChangeKind::Remove, text });
+                hunk.changes.push(Change {
+                    kind: ChangeKind::Remove,
+                    text,
+                });
             } else if let Some(text) = line.strip_prefix(' ') {
-                hunk.changes.push(Change { kind: ChangeKind::Context, text });
+                hunk.changes.push(Change {
+                    kind: ChangeKind::Context,
+                    text,
+                });
             }
         }
     }

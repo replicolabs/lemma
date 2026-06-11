@@ -1,4 +1,7 @@
-use crate::{checker::rules::gap, types::{InstructionHandler, SecurityGap, Severity, VulnClass}};
+use crate::{
+    checker::rules::gap,
+    types::{InstructionHandler, SecurityGap, Severity, VulnClass},
+};
 
 const AUTHORITY_PATTERNS: &[&str] = &["authority", "admin", "owner", "manager"];
 
@@ -6,17 +9,28 @@ pub fn check(handlers: &[InstructionHandler]) -> Vec<SecurityGap> {
     let mut gaps = Vec::new();
     for handler in handlers {
         for account in &handler.accounts {
-            if !account.has_signer { continue; }
+            if !account.has_signer {
+                continue;
+            }
             let name_lower = account.name.to_ascii_lowercase();
-            if !AUTHORITY_PATTERNS.iter().any(|p| name_lower.contains(p)) { continue; }
-            let already_bound = handler.accounts.iter().any(|a| {
-                a.has_one_field.as_deref() == Some(account.name.as_ref())
-            });
-            if already_bound { continue; }
+            if !AUTHORITY_PATTERNS.iter().any(|p| name_lower.contains(p)) {
+                continue;
+            }
+            let already_bound = handler
+                .accounts
+                .iter()
+                .any(|a| a.has_one_field.as_deref() == Some(account.name.as_ref()));
+            if already_bound {
+                continue;
+            }
 
-            let has_state_account = handler.accounts.iter()
+            let has_state_account = handler
+                .accounts
+                .iter()
                 .any(|a| !a.has_signer && a.has_owner && !a.is_pda);
-            if !has_state_account { continue; }
+            if !has_state_account {
+                continue;
+            }
 
             gaps.push(gap(
                 &handler.name,

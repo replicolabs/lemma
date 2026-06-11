@@ -10,31 +10,50 @@
 //! one asset alongside a mint for a different asset, enabling asset
 //! confusion and potential fund drains.
 
-use crate::{checker::rules::gap, types::{InstructionHandler, SecurityGap, Severity, VulnClass}};
+use crate::{
+    checker::rules::gap,
+    types::{InstructionHandler, SecurityGap, Severity, VulnClass},
+};
 
 pub fn check(handlers: &[InstructionHandler]) -> Vec<SecurityGap> {
     let mut gaps = Vec::new();
     for handler in handlers {
-        let token_accounts: Vec<_> = handler.accounts.iter().filter(|a| {
-            a.type_str.to_ascii_lowercase().contains("tokenaccount")
-                || a.type_str.contains("InterfaceAccount")
-        }).collect();
-        let has_mint = handler.accounts.iter().any(|a| {
-            a.type_str.contains("Mint") || a.name.to_ascii_lowercase().contains("mint")
-        });
-        if token_accounts.is_empty() || !has_mint { continue; }
+        let token_accounts: Vec<_> = handler
+            .accounts
+            .iter()
+            .filter(|a| {
+                a.type_str.to_ascii_lowercase().contains("tokenaccount")
+                    || a.type_str.contains("InterfaceAccount")
+            })
+            .collect();
+        let has_mint = handler
+            .accounts
+            .iter()
+            .any(|a| a.type_str.contains("Mint") || a.name.to_ascii_lowercase().contains("mint"));
+        if token_accounts.is_empty() || !has_mint {
+            continue;
+        }
         let cross_validated = handler.accounts.iter().any(|a| {
-            if a.has_one_field.as_deref().map(|f| f.contains("mint")).unwrap_or(false) {
+            if a.has_one_field
+                .as_deref()
+                .map(|f| f.contains("mint"))
+                .unwrap_or(false)
+            {
                 return true;
             }
-            a.raw_constraint.as_deref().map(|c| {
-                c.contains("token::mint")
-                    || c.contains("associated_token::mint")
-                    || c.contains("mint::")
-                    || c.contains("mint =")
-            }).unwrap_or(false)
+            a.raw_constraint
+                .as_deref()
+                .map(|c| {
+                    c.contains("token::mint")
+                        || c.contains("associated_token::mint")
+                        || c.contains("mint::")
+                        || c.contains("mint =")
+                })
+                .unwrap_or(false)
         });
-        if cross_validated { continue; }
+        if cross_validated {
+            continue;
+        }
 
         let names: Vec<&str> = token_accounts.iter().map(|a| a.name.as_ref()).collect();
         gaps.push(gap(
@@ -45,7 +64,8 @@ pub fn check(handlers: &[InstructionHandler]) -> Vec<SecurityGap> {
                 "Handler `{}` takes token account(s) [{}] alongside a mint but does not bind \
                  them with `token::mint = <mint>`. An attacker could pass a token account for \
                  a different asset. Add a `token::mint` (or `has_one = mint`) constraint.",
-                handler.name, names.join(", "),
+                handler.name,
+                names.join(", "),
             ),
             "DC-021",
         ));

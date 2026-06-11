@@ -9,7 +9,10 @@
 //! This allows substituting a different program-owned account in the PDA
 //! position, potentially accessing another user's state.
 
-use crate::{checker::rules::gap, types::{InstructionHandler, SecurityGap, Severity, VulnClass}};
+use crate::{
+    checker::rules::gap,
+    types::{InstructionHandler, SecurityGap, Severity, VulnClass},
+};
 
 pub fn check(handlers: &[InstructionHandler]) -> Vec<SecurityGap> {
     let mut gaps = Vec::new();
@@ -25,20 +28,32 @@ pub fn check(handlers: &[InstructionHandler]) -> Vec<SecurityGap> {
         for account in &handler.accounts {
             let looks_like_pda = {
                 let lower = account.name.to_ascii_lowercase();
-                lower.contains("pda") || lower.contains("escrow")
-                    || lower.contains("vault") || lower.contains("pool_state")
+                lower.contains("pda")
+                    || lower.contains("escrow")
+                    || lower.contains("vault")
+                    || lower.contains("pool_state")
                     || lower.contains("market_state")
             };
 
             if !looks_like_pda {
                 continue;
             }
-            if account.is_pda || account.has_has_one { continue; }
+            if account.is_pda || account.has_has_one {
+                continue;
+            }
             if account.type_str.contains("TokenAccount")
-                || account.type_str.contains("InterfaceAccount") { continue; }
+                || account.type_str.contains("InterfaceAccount")
+            {
+                continue;
+            }
             if let Some(c) = account.raw_constraint.as_deref()
-                && (c.contains("address =") || c.contains("seeds")
-                    || c.contains("associated_token") || c.contains("token::")) { continue; }
+                && (c.contains("address =")
+                    || c.contains("seeds")
+                    || c.contains("associated_token")
+                    || c.contains("token::"))
+            {
+                continue;
+            }
             if account.has_owner && !account.is_unchecked {
                 gaps.push(gap(
                     &handler.name,

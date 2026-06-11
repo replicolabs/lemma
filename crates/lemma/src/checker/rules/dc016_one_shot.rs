@@ -1,4 +1,7 @@
-use crate::{checker::rules::gap, types::{InstructionHandler, SecurityGap, Severity, VulnClass}};
+use crate::{
+    checker::rules::gap,
+    types::{InstructionHandler, SecurityGap, Severity, VulnClass},
+};
 
 const ONE_SHOT_PATTERNS: &[&str] = &["initialize", "init_", "_init", "create_"];
 
@@ -6,12 +9,19 @@ pub fn check(handlers: &[InstructionHandler]) -> Vec<SecurityGap> {
     let mut gaps = Vec::new();
     for handler in handlers {
         let handler_lower = handler.name.to_ascii_lowercase();
-        if !ONE_SHOT_PATTERNS.iter().any(|p| handler_lower.contains(p)) { continue; }
+        if !ONE_SHOT_PATTERNS.iter().any(|p| handler_lower.contains(p)) {
+            continue;
+        }
 
         let has_init = handler.accounts.iter().any(|a| {
-            a.raw_constraint.as_deref().map(|c| c.contains("init")).unwrap_or(false)
+            a.raw_constraint
+                .as_deref()
+                .map(|c| c.contains("init"))
+                .unwrap_or(false)
         });
-        if has_init { continue; }
+        if has_init {
+            continue;
+        }
 
         gaps.push(gap(
             &handler.name,

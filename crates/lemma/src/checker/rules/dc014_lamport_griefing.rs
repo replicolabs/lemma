@@ -9,7 +9,10 @@
 //! minimum without accounting for existing lamports can leave the account
 //! in an uninitialised but funded state.
 
-use crate::{checker::rules::gap, types::{InstructionHandler, SecurityGap, Severity, VulnClass}};
+use crate::{
+    checker::rules::gap,
+    types::{InstructionHandler, SecurityGap, Severity, VulnClass},
+};
 
 pub fn check(handlers: &[InstructionHandler]) -> Vec<SecurityGap> {
     let mut gaps = Vec::new();
@@ -26,11 +29,12 @@ pub fn check(handlers: &[InstructionHandler]) -> Vec<SecurityGap> {
                 continue;
             }
             let uses_anchor_init = account
-                .raw_constraint.as_deref()
+                .raw_constraint
+                .as_deref()
                 .map(|c| c.contains("init"))
                 .unwrap_or(false);
             if uses_anchor_init {
-                continue; 
+                continue;
             }
             gaps.push(gap(
                 &handler.name,

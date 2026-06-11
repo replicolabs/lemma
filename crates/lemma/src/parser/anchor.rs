@@ -76,8 +76,8 @@ fn extract_struct_fields(lines: &[&str], start: usize) -> Vec<AccountDecl> {
         .map(|p| start + p)
         .unwrap_or(start);
 
-    let mut depth      = 0i32;
-    let mut in_body    = false;
+    let mut depth = 0i32;
+    let mut in_body = false;
     let mut pending_constraint: Option<String> = None;
 
     for line in lines.iter().skip(body_start) {
@@ -138,11 +138,9 @@ fn parse_field_line(line: &str, constraint: Option<String>) -> Option<AccountDec
     //     || constraint_str.contains("signer")
     //     || is_authority_name(&name);
 
-    let is_signer = type_str.contains("Signer<")
-        || constraint_str.contains("signer");
+    let is_signer = type_str.contains("Signer<") || constraint_str.contains("signer");
 
-    let is_unchecked = type_str.contains("UncheckedAccount<")
-        || type_str.contains("AccountInfo<");
+    let is_unchecked = type_str.contains("UncheckedAccount<") || type_str.contains("AccountInfo<");
 
     let has_owner = (!is_unchecked
         && (type_str.contains("Account<")
@@ -151,8 +149,7 @@ fn parse_field_line(line: &str, constraint: Option<String>) -> Option<AccountDec
         || constraint_str.contains("owner =")
         || constraint_str.contains("owner=");
 
-    let is_mutable = constraint_str.contains("mut")
-        || constraint_str.contains("#[account(mut");
+    let is_mutable = constraint_str.contains("mut") || constraint_str.contains("#[account(mut");
 
     let has_has_one = constraint_str.contains("has_one");
     let has_one_field = if has_has_one {
@@ -161,17 +158,17 @@ fn parse_field_line(line: &str, constraint: Option<String>) -> Option<AccountDec
         None
     };
 
-    let is_pda   = constraint_str.contains("seeds");
+    let is_pda = constraint_str.contains("seeds");
     let has_bump = constraint_str.contains("bump");
 
     Some(AccountDecl {
-        name:           name.into_boxed_str(),
-        type_str:       type_str.into_boxed_str(),
+        name: name.into_boxed_str(),
+        type_str: type_str.into_boxed_str(),
         is_mutable,
-        has_signer:     is_signer,
+        has_signer: is_signer,
         has_owner,
         has_has_one,
-        has_one_field:  has_one_field.map(|s| s.into_boxed_str()),
+        has_one_field: has_one_field.map(|s| s.into_boxed_str()),
         is_pda,
         has_bump,
         is_unchecked,
@@ -181,7 +178,7 @@ fn parse_field_line(line: &str, constraint: Option<String>) -> Option<AccountDec
 
 fn extract_has_one_field(constraint: &str) -> Option<String> {
     let start = constraint.find("has_one")? + "has_one".len();
-    let rest  = constraint[start..].trim().strip_prefix('=')?;
+    let rest = constraint[start..].trim().strip_prefix('=')?;
     let field = rest
         .split_whitespace()
         .next()?
@@ -202,8 +199,8 @@ fn extract_has_one_field(constraint: &str) -> Option<String> {
 // }
 
 fn extract_handlers(
-    source:       &str,
-    source_path:  &str,
+    source: &str,
+    source_path: &str,
     accounts_map: &AccountsMap,
 ) -> Vec<InstructionHandler> {
     let lines: Vec<&str> = source.lines().collect();
@@ -225,7 +222,7 @@ fn extract_handlers(
                 match ch {
                     '{' => module_depth += 1,
                     '}' => module_depth -= 1,
-                    _   => {}
+                    _ => {}
                 }
             }
             if module_depth < 0 {
@@ -239,9 +236,10 @@ fn extract_handlers(
         {
             let sig = gather_signature(&lines, i);
             if sig.contains("ctx: Context<")
-                && let Some(handler) = parse_handler(&lines, i, &sig, source_path, accounts_map) {
-                    handlers.push(handler);
-                }
+                && let Some(handler) = parse_handler(&lines, i, &sig, source_path, accounts_map)
+            {
+                handlers.push(handler);
+            }
         }
 
         i += 1;
@@ -251,8 +249,11 @@ fn extract_handlers(
 }
 
 fn parse_handler(
-    lines: &[&str], sig_line: usize, sig: &str,
-    source_path: &str, accounts_map: &AccountsMap,
+    lines: &[&str],
+    sig_line: usize,
+    sig: &str,
+    source_path: &str,
+    accounts_map: &AccountsMap,
 ) -> Option<InstructionHandler> {
     let name = extract_fn_name(sig)?;
     let ctx_type = extract_context_type(sig)?;
@@ -262,23 +263,21 @@ fn parse_handler(
     let body_text = lines[sig_line..body_end.min(lines.len())].join("\n");
     let doc_comment = extract_doc_comment(lines, sig_line);
     let arithmetic = extract_arithmetic(&body_text);
-    let cpi_calls = extract_cpi_calls(&body_text, &accounts);  // note: now takes accounts
+    let cpi_calls = extract_cpi_calls(&body_text, &accounts); // note: now takes accounts
     Some(InstructionHandler {
-        name: name.into_boxed_str(), accounts, args, arithmetic, cpi_calls,
+        name: name.into_boxed_str(),
+        accounts,
+        args,
+        arithmetic,
+        cpi_calls,
         doc_comment: doc_comment.map(|s| s.into_boxed_str()),
         source_file: source_path.into(),
     })
 }
 
 fn extract_fn_name(sig: &str) -> Option<String> {
-    let after_fn = sig
-        .split_once("fn ")?
-        .1;
-    let name = after_fn
-        .split('(')
-        .next()?
-        .trim()
-        .to_string();
+    let after_fn = sig.split_once("fn ")?.1;
+    let name = after_fn.split('(').next()?.trim().to_string();
     if name.is_empty() { None } else { Some(name) }
 }
 
@@ -303,17 +302,17 @@ fn extract_context_type(sig: &str) -> Option<String> {
     if end == 0 {
         return None;
     }
-    let ty = rest[..end]
-        .split('<')
-        .next()?
-        .trim()
-        .to_string();
+    let ty = rest[..end].split('<').next()?.trim().to_string();
     Some(ty)
 }
 
 fn extract_fn_args(sig: &str) -> Vec<(Box<str>, Box<str>)> {
-    let Some(open)  = sig.find('(')  else { return Vec::new() };
-    let Some(close) = sig.rfind(')') else { return Vec::new() };
+    let Some(open) = sig.find('(') else {
+        return Vec::new();
+    };
+    let Some(close) = sig.rfind(')') else {
+        return Vec::new();
+    };
     let params = &sig[open + 1..close];
 
     params
@@ -324,8 +323,8 @@ fn extract_fn_args(sig: &str) -> Vec<(Box<str>, Box<str>)> {
                 return None;
             }
             let colon = param.find(':')?;
-            let name  = param[..colon].trim().to_string();
-            let ty    = param[colon + 1..].trim().to_string();
+            let name = param[..colon].trim().to_string();
+            let ty = param[colon + 1..].trim().to_string();
             if name.is_empty() || ty.is_empty() {
                 return None;
             }
@@ -390,19 +389,29 @@ fn extract_arithmetic(body: &str) -> Vec<ArithmeticOp> {
             continue;
         }
 
-        for method in &["checked_add", "checked_sub", "checked_mul", "checked_div",
-                        "saturating_add", "saturating_sub", "saturating_mul"] {
+        for method in &[
+            "checked_add",
+            "checked_sub",
+            "checked_mul",
+            "checked_div",
+            "saturating_add",
+            "saturating_sub",
+            "saturating_mul",
+        ] {
             if trimmed.contains(method)
-                && let Some(op) = parse_checked_op(trimmed, method, line_num as u32 + 1) {
-                    ops.push(op);
-                }
+                && let Some(op) = parse_checked_op(trimmed, method, line_num as u32 + 1)
+            {
+                ops.push(op);
+            }
         }
         for op_char in &['+', '-', '*'] {
-            if trimmed.contains(*op_char) && !trimmed.contains("checked")
+            if trimmed.contains(*op_char)
+                && !trimmed.contains("checked")
                 && involves_token_variable(trimmed)
-                    && let Some(op) = parse_raw_op(trimmed, *op_char, line_num as u32 + 1) {
-                        ops.push(op);
-                    }
+                && let Some(op) = parse_raw_op(trimmed, *op_char, line_num as u32 + 1)
+            {
+                ops.push(op);
+            }
         }
     }
 
@@ -411,10 +420,20 @@ fn extract_arithmetic(body: &str) -> Vec<ArithmeticOp> {
 
 fn involves_token_variable(line: &str) -> bool {
     let lower = line.to_ascii_lowercase();
-    ["amount", "balance", "fee", "collateral", "reserve", "debt",
-     "lamport", "token", "liquidity", "price"]
-        .iter()
-        .any(|kw| lower.contains(kw))
+    [
+        "amount",
+        "balance",
+        "fee",
+        "collateral",
+        "reserve",
+        "debt",
+        "lamport",
+        "token",
+        "liquidity",
+        "price",
+    ]
+    .iter()
+    .any(|kw| lower.contains(kw))
 }
 
 fn parse_checked_op(line: &str, method: &str, line_num: u32) -> Option<ArithmeticOp> {
@@ -422,22 +441,22 @@ fn parse_checked_op(line: &str, method: &str, line_num: u32) -> Option<Arithmeti
         "checked_add" | "saturating_add" => '+',
         "checked_sub" | "saturating_sub" => '-',
         "checked_mul" | "saturating_mul" => '*',
-        "checked_div"                    => '/',
-        _                                => return None,
+        "checked_div" => '/',
+        _ => return None,
     };
 
     let dot_pos = line.find('.')?;
     let lhs = line[..dot_pos].trim();
     let arg_start = line.find('(')? + 1;
-    let arg_end   = line.find(')')?;
+    let arg_end = line.find(')')?;
     let rhs = line[arg_start..arg_end].trim();
 
     Some(ArithmeticOp {
-        op:         op_char,
-        lhs:        lhs.into(),
-        rhs:        rhs.into(),
+        op: op_char,
+        lhs: lhs.into(),
+        rhs: rhs.into(),
         is_checked: true,
-        line:       Some(line_num),
+        line: Some(line_num),
     })
 }
 
@@ -449,8 +468,16 @@ fn parse_raw_op(line: &str, op_char: char, line_num: u32) -> Option<ArithmeticOp
     }
     let lhs = line[..op_pos].trim();
     let rhs = line[op_pos + op_char.len_utf8()..].trim();
-    if lhs.is_empty() || rhs.is_empty() { return None; }
-    Some(ArithmeticOp { op: op_char, lhs: lhs.into(), rhs: rhs.into(), is_checked: false, line: Some(line_num) })
+    if lhs.is_empty() || rhs.is_empty() {
+        return None;
+    }
+    Some(ArithmeticOp {
+        op: op_char,
+        lhs: lhs.into(),
+        rhs: rhs.into(),
+        is_checked: false,
+        line: Some(line_num),
+    })
 }
 
 fn extract_cpi_program_account(text: &str) -> Option<String> {
@@ -463,8 +490,11 @@ fn extract_cpi_program_account(text: &str) -> Option<String> {
     let inner = text[start..].trim().trim_start_matches('&').trim();
     let token: String = inner
         .split(|c: char| !c.is_alphanumeric() && c != '_' && c != '.')
-        .next()?.to_string();
-    if token.is_empty() { return None; }
+        .next()?
+        .to_string();
+    if token.is_empty() {
+        return None;
+    }
     if let Some(rest) = token.strip_prefix("ctx.accounts.") {
         return rest.split('.').next().map(str::to_string);
     }
@@ -476,16 +506,19 @@ fn extract_cpi_calls(body: &str, accounts: &[AccountDecl]) -> Vec<CpiCall> {
     let mut calls = Vec::new();
     for (i, line) in lines.iter().enumerate() {
         let t = line.trim();
-        if t.starts_with("//") { continue; }
+        if t.starts_with("//") {
+            continue;
+        }
         if !(t.contains("CpiContext::new(") || t.contains("CpiContext::new_with_signer(")) {
             continue; // raw invoke handled separately; skip to avoid false flags
         }
         let window = lines[i..(i + 4).min(lines.len())].join(" ");
         let prog = extract_cpi_program_account(&window).unwrap_or_else(|| "unknown".into());
         // A typed Program<T> account is identity-checked by Anchor → verified.
-        let verified = accounts.iter().any(|a| {
-            a.name.as_ref() == prog && a.type_str.contains("Program<")
-        }) || body.contains(&format!("require_keys_eq!({}", prog));
+        let verified = accounts
+            .iter()
+            .any(|a| a.name.as_ref() == prog && a.type_str.contains("Program<"))
+            || body.contains(&format!("require_keys_eq!({}", prog));
         calls.push(CpiCall {
             program_account: prog.into_boxed_str(),
             program_verified: verified,

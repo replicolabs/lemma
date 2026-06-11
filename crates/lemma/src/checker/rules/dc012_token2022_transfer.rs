@@ -8,7 +8,10 @@
 //! `transfer` returns `MintRequiredForTransfer` and the instruction fails
 //! silently. Use `transfer_checked` or `anchor_spl::token_interface`.
 
-use crate::{checker::rules::gap, types::{InstructionHandler, SecurityGap, Severity, VulnClass}};
+use crate::{
+    checker::rules::gap,
+    types::{InstructionHandler, SecurityGap, Severity, VulnClass},
+};
 
 pub fn check(_handlers: &[InstructionHandler], source: &str) -> Vec<SecurityGap> {
     let uses_token_interface = source.contains("token_interface")

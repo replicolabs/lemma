@@ -8,7 +8,10 @@
 //! An attacker can manipulate another user's state by calling instructions
 //! that modify the shared PDA.
 
-use crate::{checker::rules::gap, types::{InstructionHandler, SecurityGap, Severity, VulnClass}};
+use crate::{
+    checker::rules::gap,
+    types::{InstructionHandler, SecurityGap, Severity, VulnClass},
+};
 
 pub fn check(handlers: &[InstructionHandler]) -> Vec<SecurityGap> {
     let mut gaps = Vec::new();
@@ -39,16 +42,19 @@ pub fn check(handlers: &[InstructionHandler]) -> Vec<SecurityGap> {
 }
 
 fn has_user_specific_seed(constraint: &str) -> bool {
-    constraint.contains(".key()") || constraint.contains(".as_ref()") ||
-    has_non_literal_seed(constraint)
+    constraint.contains(".key()")
+        || constraint.contains(".as_ref()")
+        || has_non_literal_seed(constraint)
 }
 
 fn has_non_literal_seed(constraint: &str) -> bool {
-    let Some(seeds_start) = constraint.find("seeds = [") else { return false };
+    let Some(seeds_start) = constraint.find("seeds = [") else {
+        return false;
+    };
     let after = &constraint[seeds_start + 9..];
     let seeds_end = after.find(']').unwrap_or(after.len());
     let seeds = &after[..seeds_end];
-    
+
     seeds
         .split(',')
         .map(|s| s.trim())

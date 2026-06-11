@@ -1,4 +1,4 @@
-use anyhow::{bail, Context, Result};
+use anyhow::{Context, Result, bail};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use std::time::Duration;
@@ -9,8 +9,8 @@ const USER_AGENT: &str = concat!("lemma/", env!("CARGO_PKG_VERSION"));
 
 #[derive(Serialize)]
 struct EmbedRequest<'a> {
-    model:      &'a str,
-    input:      &'a [&'a str],
+    model: &'a str,
+    input: &'a [&'a str],
     input_type: &'a str,
 }
 
@@ -22,23 +22,15 @@ struct EmbedResponse {
 #[derive(Deserialize)]
 struct EmbedData {
     embedding: Vec<f32>,
-    index:     usize,
+    index: usize,
 }
 
-pub async fn embed_query(
-    query:   &str,
-    model:   &str,
-    api_key: &str,
-) -> Result<Vec<f32>> {
+pub async fn embed_query(query: &str, model: &str, api_key: &str) -> Result<Vec<f32>> {
     let client = build_client()?;
     embed_one(&client, query, model, api_key).await
 }
 
-pub async fn embed_batch(
-    texts:   &[&str],
-    model:   &str,
-    api_key: &str,
-) -> Result<Vec<Vec<f32>>> {
+pub async fn embed_batch(texts: &[&str], model: &str, api_key: &str) -> Result<Vec<Vec<f32>>> {
     if texts.is_empty() {
         return Ok(Vec::new());
     }
@@ -46,7 +38,7 @@ pub async fn embed_batch(
     let client = build_client()?;
     let body = EmbedRequest {
         model,
-        input:      texts,
+        input: texts,
         input_type: "document",
     };
 
@@ -66,9 +58,15 @@ pub async fn embed_query_batch(
     model: &str,
     api_key: &str,
 ) -> Result<Vec<Vec<f32>>> {
-    if texts.is_empty() { return Ok(Vec::new()); }
+    if texts.is_empty() {
+        return Ok(Vec::new());
+    }
     let client = build_client()?;
-    let body = EmbedRequest { model, input: texts, input_type: "query" };
+    let body = EmbedRequest {
+        model,
+        input: texts,
+        input_type: "query",
+    };
     let response = client
         .post(VOYAGE_EMBED_URL)
         .bearer_auth(api_key)
@@ -87,17 +85,12 @@ fn build_client() -> Result<Client> {
         .context("failed to build HTTP client for embedding")
 }
 
-async fn embed_one(
-    client:  &Client,
-    text:    &str,
-    model:   &str,
-    api_key: &str,
-) -> Result<Vec<f32>> {
+async fn embed_one(client: &Client, text: &str, model: &str, api_key: &str) -> Result<Vec<f32>> {
     let texts = [text];
     let body = EmbedRequest {
         model,
-        input:      &texts,
-        input_type: "query", 
+        input: &texts,
+        input_type: "query",
     };
 
     let response = client
@@ -115,13 +108,10 @@ async fn embed_one(
     Ok(embeddings.swap_remove(0))
 }
 
-async fn parse_response(
-    response: reqwest::Response,
-    expected: usize,
-) -> Result<Vec<Vec<f32>>> {
+async fn parse_response(response: reqwest::Response, expected: usize) -> Result<Vec<Vec<f32>>> {
     if !response.status().is_success() {
         let status = response.status();
-        let body   = response.text().await.unwrap_or_default();
+        let body = response.text().await.unwrap_or_default();
         bail!(
             "Voyage AI API returned HTTP {}: {}",
             status,

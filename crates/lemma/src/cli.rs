@@ -2,11 +2,11 @@ use clap::{Parser, Subcommand, ValueEnum};
 
 #[derive(Debug, Parser)]
 #[command(
-    name    = "lemma",
+    name = "lemma",
     version,
     author,
     propagate_version = true,
-    max_term_width = 100,
+    max_term_width = 100
 )]
 pub struct Cli {
     #[command(subcommand)]
@@ -110,10 +110,10 @@ pub enum FrameworkArg {
 impl From<FrameworkArg> for crate::types::Framework {
     fn from(arg: FrameworkArg) -> Self {
         match arg {
-            FrameworkArg::Anchor    => Self::Anchor,
-            FrameworkArg::Quasar    => Self::Quasar,
+            FrameworkArg::Anchor => Self::Anchor,
+            FrameworkArg::Quasar => Self::Quasar,
             FrameworkArg::Pinocchio => Self::Pinocchio,
-            FrameworkArg::Native    => Self::Native,
+            FrameworkArg::Native => Self::Native,
         }
     }
 }
@@ -136,16 +136,16 @@ pub enum ProgramTypeArg {
 impl From<ProgramTypeArg> for crate::types::ProgramType {
     fn from(arg: ProgramTypeArg) -> Self {
         match arg {
-            ProgramTypeArg::Amm          => Self::Amm,
-            ProgramTypeArg::Lending      => Self::Lending,
-            ProgramTypeArg::Bridge       => Self::Bridge,
-            ProgramTypeArg::Staking      => Self::Staking,
-            ProgramTypeArg::Nft          => Self::Nft,
-            ProgramTypeArg::Multisig     => Self::Multisig,
+            ProgramTypeArg::Amm => Self::Amm,
+            ProgramTypeArg::Lending => Self::Lending,
+            ProgramTypeArg::Bridge => Self::Bridge,
+            ProgramTypeArg::Staking => Self::Staking,
+            ProgramTypeArg::Nft => Self::Nft,
+            ProgramTypeArg::Multisig => Self::Multisig,
             ProgramTypeArg::TokenProgram => Self::TokenProgram,
-            ProgramTypeArg::Governance   => Self::Governance,
-            ProgramTypeArg::Oracle       => Self::Oracle,
-            ProgramTypeArg::Other        => Self::Other,
+            ProgramTypeArg::Governance => Self::Governance,
+            ProgramTypeArg::Oracle => Self::Oracle,
+            ProgramTypeArg::Other => Self::Other,
         }
     }
 }

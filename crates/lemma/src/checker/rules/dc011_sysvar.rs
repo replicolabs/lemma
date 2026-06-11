@@ -9,7 +9,10 @@
 //! data layout but incorrect address, allowing the attacker to feed the
 //! program manipulated timestamps or rent values.
 
-use crate::{checker::rules::gap, types::{InstructionHandler, SecurityGap, Severity, VulnClass}};
+use crate::{
+    checker::rules::gap,
+    types::{InstructionHandler, SecurityGap, Severity, VulnClass},
+};
 
 const SYSVAR_NAMES: &[&str] = &["clock", "rent", "slot_hashes", "sysvar"];
 
@@ -42,9 +45,13 @@ pub fn check(handlers: &[InstructionHandler], source: &str) -> Vec<SecurityGap> 
                      can pass a fake sysvar with manipulated data. Use \
                      `pinocchio::sysvars::clock::Clock::get()` instead.",
                     account.name,
-                    if name_lower.contains("clock") { "Clock" }
-                    else if name_lower.contains("rent") { "Rent" }
-                    else { "Sysvar" },
+                    if name_lower.contains("clock") {
+                        "Clock"
+                    } else if name_lower.contains("rent") {
+                        "Rent"
+                    } else {
+                        "Sysvar"
+                    },
                 ),
                 "DC-011",
             ));

@@ -7,20 +7,25 @@
 //! can be called by anyone. Any caller can write arbitrary data to
 //! program-owned state accounts.
 
-use crate::{checker::rules::gap, types::{InstructionHandler, SecurityGap, Severity, VulnClass}};
+use crate::{
+    checker::rules::gap,
+    types::{InstructionHandler, SecurityGap, Severity, VulnClass},
+};
 
 pub fn check(handlers: &[InstructionHandler]) -> Vec<SecurityGap> {
     let mut gaps = Vec::new();
     for handler in handlers {
-        let has_mutable_state = handler.accounts.iter().any(|a| {
-            a.is_mutable && a.has_owner && !a.is_pda && !a.is_unchecked
-        });
+        let has_mutable_state = handler
+            .accounts
+            .iter()
+            .any(|a| a.is_mutable && a.has_owner && !a.is_pda && !a.is_unchecked);
         if !has_mutable_state {
             continue;
         }
-        let has_access_control = handler.accounts.iter().any(|a| {
-            a.has_signer || a.has_has_one
-        });
+        let has_access_control = handler
+            .accounts
+            .iter()
+            .any(|a| a.has_signer || a.has_has_one);
         if has_access_control {
             continue;
         }

@@ -3,18 +3,16 @@ pub mod rules;
 use crate::types::{GapSource, InstructionHandler, SecurityGap};
 
 use rules::{
-    dc001_owner, dc002_signer, dc003_init_if_needed, dc004_pda_seeds,
-    dc005_duplicate_mutable, dc006_arithmetic, dc007_cargo_overflow,
-    dc008_arbitrary_cpi, dc009_canonical_bump, dc010_account_close,
-    dc011_sysvar, dc012_token2022_transfer, dc013_has_one, dc014_lamport_griefing, 
-    dc016_one_shot, dc017_permissionless_write, dc019_stored_field,
+    dc001_owner, dc002_signer, dc003_init_if_needed, dc004_pda_seeds, dc005_duplicate_mutable,
+    dc006_arithmetic, dc007_cargo_overflow, dc008_arbitrary_cpi, dc009_canonical_bump,
+    dc010_account_close, dc011_sysvar, dc012_token2022_transfer, dc013_has_one,
+    dc014_lamport_griefing, dc016_one_shot, dc017_permissionless_write, dc019_stored_field,
     dc020_authority_revoke, dc021_paired_validator, dc022_pda_verify,
 };
 
-
 pub fn run_all(
-    handlers:      &[InstructionHandler],
-    source:        &str,             
+    handlers: &[InstructionHandler],
+    source: &str,
     gap_id_offset: usize,
 ) -> Vec<SecurityGap> {
     let mut gaps: Vec<SecurityGap> = Vec::new();

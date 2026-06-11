@@ -7,19 +7,26 @@
 //! reinitialising it to a state that benefits them (e.g. becoming the new
 //! authority).
 
-use crate::{checker::rules::gap, types::{InstructionHandler, SecurityGap, Severity, VulnClass}};
+use crate::{
+    checker::rules::gap,
+    types::{InstructionHandler, SecurityGap, Severity, VulnClass},
+};
 
 pub fn check(handlers: &[InstructionHandler]) -> Vec<SecurityGap> {
     let mut gaps = Vec::new();
     for handler in handlers {
         for account in &handler.accounts {
             let c = account.raw_constraint.as_deref().unwrap_or("");
-            if !c.contains("init_if_needed") { continue; }
+            if !c.contains("init_if_needed") {
+                continue;
+            }
             let is_token_like = account.type_str.contains("TokenAccount")
                 || account.type_str.contains("InterfaceAccount")
                 || account.type_str.contains("Mint")
                 || c.contains("associated_token");
-            if is_token_like { continue; }
+            if is_token_like {
+                continue;
+            }
 
             gaps.push(gap(
                 &handler.name,

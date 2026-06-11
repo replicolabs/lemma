@@ -9,8 +9,8 @@ mod retrieval;
 mod types;
 
 use anyhow::{Context, Result};
-use clap::Parser as ClapParser;
 use chrono::Utc;
+use clap::Parser as ClapParser;
 
 use cli::{Cli, Command, KbCommand, OutputFormat};
 use types::{AnalysisResult, Framework, ProgramType};
@@ -29,16 +29,16 @@ async fn run(cli: Cli) -> Result<()> {
         banner::print();
     }
     match cli.command {
-        Command::Init              => cmd_init().await,
-        Command::Info              => cmd_info().await,
-        Command::Kb(sub)           => match sub {
-            KbCommand::Update      => cmd_kb_update(false).await,
-            KbCommand::Status      => cmd_kb_status().await,
+        Command::Init => cmd_init().await,
+        Command::Info => cmd_info().await,
+        Command::Kb(sub) => match sub {
+            KbCommand::Update => cmd_kb_update(false).await,
+            KbCommand::Status => cmd_kb_status().await,
             KbCommand::Build(args) => cmd_kb_build(args).await,
         },
-        Command::Search(args)      => cmd_search(args).await,
-        Command::Analyze(args)     => cmd_analyze(args).await,
-        Command::Patch(args)       => cmd_patch(args).await,
+        Command::Search(args) => cmd_search(args).await,
+        Command::Analyze(args) => cmd_analyze(args).await,
+        Command::Patch(args) => cmd_patch(args).await,
         Command::Acknowledge(args) => cmd_acknowledge(args).await,
     }
 }
@@ -46,8 +46,8 @@ async fn run(cli: Cli) -> Result<()> {
 fn shows_banner(cmd: &Command) -> bool {
     match cmd {
         Command::Analyze(a) => !matches!(a.format, OutputFormat::Json),
-        Command::Search(a)  => !matches!(a.format, OutputFormat::Json),
-        _                   => true,
+        Command::Search(a) => !matches!(a.format, OutputFormat::Json),
+        _ => true,
     }
 }
 
@@ -117,37 +117,73 @@ async fn cmd_info() -> Result<()> {
     println!();
     println!("  {} {}", "Lemma".bold(), env!("CARGO_PKG_VERSION"));
     println!();
-    println!("  {} {}", "API key:".dimmed(), if config.is_initialised() {
-        "configured".green().to_string()
-    } else {
-        "not set — run `lemma init`".red().to_string()
-    });
-    println!("  {} {}", "Knowledge base:".dimmed(), kb::status_line(&config));
+    println!(
+        "  {} {}",
+        "API key:".dimmed(),
+        if config.is_initialised() {
+            "configured".green().to_string()
+        } else {
+            "not set — run `lemma init`".red().to_string()
+        }
+    );
+    println!(
+        "  {} {}",
+        "Knowledge base:".dimmed(),
+        kb::status_line(&config)
+    );
 
     let kb_path = config::kb_path()?;
     if kb_path.exists()
-        && let Ok(kb) = kb::load(&config) {
-            println!(
-                "  {} {} entries, {} dimensions ({})",
-                "KB contents:".dimmed(),
-                kb.entry_count,
-                kb.embedding_dimensions,
-                kb.embedding_model,
-            );
-            println!("  {} built {} via {} ({} audit findings, {} framework chunks)",
-                "KB build:".dimmed(), kb.built_at, kb.embedding_provider,
-                kb.audit_finding_count, kb.framework_chunk_count);
-            println!("  {} {}", "Program types:".dimmed(), kb.program_types_covered.join(", "));
-            println!("  {} {}", "Vuln classes:".dimmed(),  kb.vulnerability_classes_covered.join(", "));
-            println!("  {} {}", "Frameworks:".dimmed(),    kb.frameworks_covered.join(", "));
-        }
+        && let Ok(kb) = kb::load(&config)
+    {
+        println!(
+            "  {} {} entries, {} dimensions ({})",
+            "KB contents:".dimmed(),
+            kb.entry_count,
+            kb.embedding_dimensions,
+            kb.embedding_model,
+        );
+        println!(
+            "  {} built {} via {} ({} audit findings, {} framework chunks)",
+            "KB build:".dimmed(),
+            kb.built_at,
+            kb.embedding_provider,
+            kb.audit_finding_count,
+            kb.framework_chunk_count
+        );
+        println!(
+            "  {} {}",
+            "Program types:".dimmed(),
+            kb.program_types_covered.join(", ")
+        );
+        println!(
+            "  {} {}",
+            "Vuln classes:".dimmed(),
+            kb.vulnerability_classes_covered.join(", ")
+        );
+        println!(
+            "  {} {}",
+            "Frameworks:".dimmed(),
+            kb.frameworks_covered.join(", ")
+        );
+    }
 
-    println!("  {} {}", "Config:".dimmed(), config::config_path()?.display());
+    println!(
+        "  {} {}",
+        "Config:".dimmed(),
+        config::config_path()?.display()
+    );
 
     if let Ok(lock_path) = config::kb_lock_path()
-        && let Ok(Some(lock)) = config::KbLock::read(&lock_path) {
-            println!("  {} {} (downloaded {})", "KB lock:".dimmed(), lock.version, lock.downloaded_at);
-        }
+        && let Ok(Some(lock)) = config::KbLock::read(&lock_path)
+    {
+        println!(
+            "  {} {} (downloaded {})",
+            "KB lock:".dimmed(),
+            lock.version,
+            lock.downloaded_at
+        );
+    }
 
     println!();
 
@@ -206,24 +242,41 @@ async fn cmd_kb_build(args: cli::KbBuildArgs) -> Result<()> {
             for finding in findings {
                 let instruction = finding["affected_instruction"].as_str().unwrap_or("");
                 let vuln_class = finding["vulnerability_class"].as_str().unwrap_or("");
-                let pattern = finding["abstract_pattern_description"].as_str().unwrap_or("");
-                let nl = finding.pointer("/derived_property/natural_language")
-                    .and_then(|v| v.as_str()).unwrap_or("");
+                let pattern = finding["abstract_pattern_description"]
+                    .as_str()
+                    .unwrap_or("");
+                let nl = finding
+                    .pointer("/derived_property/natural_language")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("");
                 let rec = finding["recommendation"].as_str().unwrap_or("");
 
                 let text = format!(
                     "Program type: {}\nInstruction: {}\nVulnerability: {}\nPattern: {}\nProperty: {}\nFix: {}\nSource: {} {} audit",
-                    program_type, instruction,
+                    program_type,
+                    instruction,
                     vuln_class.replace('_', " "),
-                    pattern, nl, rec, firm, program,
+                    pattern,
+                    nl,
+                    rec,
+                    firm,
+                    program,
                 );
                 embedding_texts.push(text);
-                entry_labels.push(format!("{}:{}", path.display(), finding["id"].as_str().unwrap_or("?")));
+                entry_labels.push(format!(
+                    "{}:{}",
+                    path.display(),
+                    finding["id"].as_str().unwrap_or("?")
+                ));
             }
         }
     }
 
-    println!("Embedding {} finding(s) using {}…", embedding_texts.len(), args.model);
+    println!(
+        "Embedding {} finding(s) using {}…",
+        embedding_texts.len(),
+        args.model
+    );
     let text_refs: Vec<&str> = embedding_texts.iter().map(|s| s.as_str()).collect();
 
     const BATCH: usize = 64;
@@ -279,13 +332,20 @@ async fn cmd_kb_build(args: cli::KbBuildArgs) -> Result<()> {
 
     let size_mb = output_path.metadata()?.len() as f64 / 1_048_576.0;
     println!();
-    println!("  {} Written to {} ({:.1} MB)", "✓".green(), output_path.display(), size_mb);
+    println!(
+        "  {} Written to {} ({:.1} MB)",
+        "✓".green(),
+        output_path.display(),
+        size_mb
+    );
 
     Ok(())
 }
 
 fn collect_json_files(dir: &std::path::Path, out: &mut Vec<std::path::PathBuf>) {
-    let Ok(entries) = std::fs::read_dir(dir) else { return };
+    let Ok(entries) = std::fs::read_dir(dir) else {
+        return;
+    };
     for entry in entries.flatten() {
         let path = entry.path();
         if path.is_dir() {
@@ -308,23 +368,17 @@ async fn cmd_search(args: cli::SearchArgs) -> Result<()> {
     println!("Searching for: {}", args.query.cyan());
     println!();
 
-    let embedding = retrieval::embed::embed_query(
-        &args.query,
-        &kb.embedding_model,
-        api_key,
-    )
-    .await
-    .context("failed to embed search query")?;
+    let embedding = retrieval::embed::embed_query(&args.query, &kb.embedding_model, api_key)
+        .await
+        .context("failed to embed search query")?;
 
-    let results = retrieval::search::search(
-        &kb,
-        &embedding,
-        args.limit,
-        args.min_similarity,
-    );
+    let results = retrieval::search::search(&kb, &embedding, args.limit, args.min_similarity);
 
     if results.is_empty() {
-        println!("No results above similarity threshold {:.2}", args.min_similarity);
+        println!(
+            "No results above similarity threshold {:.2}",
+            args.min_similarity
+        );
         return Ok(());
     }
 
@@ -341,7 +395,11 @@ async fn cmd_search(args: cli::SearchArgs) -> Result<()> {
                 "         {} {} {}",
                 firm.cyan(),
                 entry.program_name.as_deref().unwrap_or(""),
-                entry.audit_year.map(|y| format!("({})", y)).unwrap_or_default().dimmed(),
+                entry
+                    .audit_year
+                    .map(|y| format!("({})", y))
+                    .unwrap_or_default()
+                    .dimmed(),
             );
         }
         if let Some(vc) = &entry.vulnerability_class {
@@ -370,20 +428,22 @@ async fn cmd_search(args: cli::SearchArgs) -> Result<()> {
     if matches!(args.format, OutputFormat::Json) {
         let json: Vec<serde_json::Value> = results
             .iter()
-            .map(|r| serde_json::json!({
-                "id":                  r.entry.id,
-                "score":               r.score,
-                "source_type":         r.entry.source_type,
-                "firm":                r.entry.firm,
-                "vulnerability_class": r.entry.vulnerability_class,
-                "natural_language":    r.entry.natural_language,
-                "program_type":        r.entry.program_type,
-                "instruction_name":    r.entry.instruction_name,
-                "framework":           r.entry.framework,
-                "severity":            r.entry.severity,
-                "kani_assertion":      r.entry.kani_assertion,
-                "embedding_text":      r.entry.embedding_text,
-            }))
+            .map(|r| {
+                serde_json::json!({
+                    "id":                  r.entry.id,
+                    "score":               r.score,
+                    "source_type":         r.entry.source_type,
+                    "firm":                r.entry.firm,
+                    "vulnerability_class": r.entry.vulnerability_class,
+                    "natural_language":    r.entry.natural_language,
+                    "program_type":        r.entry.program_type,
+                    "instruction_name":    r.entry.instruction_name,
+                    "framework":           r.entry.framework,
+                    "severity":            r.entry.severity,
+                    "kani_assertion":      r.entry.kani_assertion,
+                    "embedding_text":      r.entry.embedding_text,
+                })
+            })
             .collect();
         println!("{}", serde_json::to_string_pretty(&json)?);
     }
@@ -405,30 +465,33 @@ async fn cmd_analyze(args: cli::AnalyzeArgs) -> Result<()> {
 
     let framework: Framework = match args.framework {
         Some(fw) => fw.into(),
-        None => {
-            match parser::detect_framework(program_path) {
-                Some(fw) => {
-                    eprintln!("  {} Auto-detected framework: {}", "→".dimmed(), fw);
-                    fw
-                }
-                None => {
-                    eprintln!(
-                        "  {} Could not auto-detect framework. Defaulting to Anchor.",
-                        "!".yellow()
-                    );
-                    eprintln!("  Use --framework to specify explicitly.");
-                    Framework::Anchor
-                }
+        None => match parser::detect_framework(program_path) {
+            Some(fw) => {
+                eprintln!("  {} Auto-detected framework: {}", "→".dimmed(), fw);
+                fw
             }
-        }
+            None => {
+                eprintln!(
+                    "  {} Could not auto-detect framework. Defaulting to Anchor.",
+                    "!".yellow()
+                );
+                eprintln!("  Use --framework to specify explicitly.");
+                Framework::Anchor
+            }
+        },
     };
 
     let program_type: ProgramType = args.program_type.into();
 
     eprintln!("  {} {}", "Analyzing:".dimmed(), source_label);
-    eprintln!("  {} {} / {}", "Framework:".dimmed(), framework, program_type);
+    eprintln!(
+        "  {} {} / {}",
+        "Framework:".dimmed(),
+        framework,
+        program_type
+    );
     eprintln!();
-    
+
     let mut handlers = parser::parse(&source, &source_label, framework);
 
     if handlers.is_empty() {
@@ -449,7 +512,11 @@ async fn cmd_analyze(args: cli::AnalyzeArgs) -> Result<()> {
 
     let mut all_gaps = if !args.no_check {
         let gaps = checker::run_all(&handlers, &source, 0);
-        eprintln!("  {} {} deterministic gap(s) found", "✓".green(), gaps.len());
+        eprintln!(
+            "  {} {} deterministic gap(s) found",
+            "✓".green(),
+            gaps.len()
+        );
         gaps
     } else {
         Vec::new()
@@ -459,8 +526,12 @@ async fn cmd_analyze(args: cli::AnalyzeArgs) -> Result<()> {
     if !args.no_retrieval {
         for handler in &handlers {
             let retrieved = retrieval::retrieve(
-                handler, program_type, &kb, &config,
-                args.top_k, args.min_similarity,
+                handler,
+                program_type,
+                &kb,
+                &config,
+                args.top_k,
+                args.min_similarity,
             )
             .await
             .with_context(|| format!("retrieval failed for handler `{}`", handler.name))?;
@@ -484,21 +555,21 @@ async fn cmd_analyze(args: cli::AnalyzeArgs) -> Result<()> {
     all_gaps.sort_unstable_by_key(|b| std::cmp::Reverse(b.severity));
 
     let result = AnalysisResult {
-        program:            args.program.clone().into_boxed_str(),
+        program: args.program.clone().into_boxed_str(),
         framework,
         program_type,
         security_score,
-        lemma_version:      env!("CARGO_PKG_VERSION").into(),
-        kb_version:         kb.version.clone(),
+        lemma_version: env!("CARGO_PKG_VERSION").into(),
+        kb_version: kb.version.clone(),
         analysis_timestamp: Utc::now().to_rfc3339().into_boxed_str(),
         git_commit,
-        gaps:               all_gaps,
-        invariants:         Vec::new(),
+        gaps: all_gaps,
+        invariants: Vec::new(),
     };
 
     let output_path = args.output.as_deref().map(std::path::Path::new);
     let artifacts = output::ArtifactSet {
-        qedspec:         false,
+        qedspec: false,
         markdown_report: false,
     };
 
@@ -507,7 +578,6 @@ async fn cmd_analyze(args: cli::AnalyzeArgs) -> Result<()> {
 
     Ok(())
 }
-
 
 async fn cmd_patch(args: cli::PatchArgs) -> Result<()> {
     use owo_colors::OwoColorize;
@@ -520,20 +590,21 @@ async fn cmd_patch(args: cli::PatchArgs) -> Result<()> {
         );
     }
 
-    let content = std::fs::read_to_string(result_path)
-        .context("failed to read analysis result")?;
-    let result: AnalysisResult = serde_json::from_str(&content)
-        .context("failed to parse analysis result")?;
+    let content = std::fs::read_to_string(result_path).context("failed to read analysis result")?;
+    let result: AnalysisResult =
+        serde_json::from_str(&content).context("failed to parse analysis result")?;
 
     let gap = result
         .gaps
         .iter()
         .find(|g| g.id.as_ref() == args.gap.as_str())
-        .ok_or_else(|| anyhow::anyhow!(
-            "Gap `{}` not found in the last analysis result.\n\
+        .ok_or_else(|| {
+            anyhow::anyhow!(
+                "Gap `{}` not found in the last analysis result.\n\
              Run `lemma analyze` to generate current results.",
-            args.gap
-        ))?;
+                args.gap
+            )
+        })?;
 
     println!();
     println!(
@@ -546,10 +617,7 @@ async fn cmd_patch(args: cli::PatchArgs) -> Result<()> {
     println!();
 
     if args.preview || (!args.apply) {
-        println!(
-            "  {} No patch file found for this gap.",
-            "!".yellow()
-        );
+        println!("  {} No patch file found for this gap.", "!".yellow());
         println!(
             "  The Lemma agent generates patches after analysis.\n\
              In Claude Code: \"fix gap {}\"",
@@ -565,10 +633,13 @@ async fn cmd_patch(args: cli::PatchArgs) -> Result<()> {
     }
 
     if args.apply {
-        let patch_path = std::path::Path::new(".lemma/patches")
-            .join(format!("{}.diff", gap.id));
+        let patch_path = std::path::Path::new(".lemma/patches").join(format!("{}.diff", gap.id));
         if !patch_path.exists() {
-            println!("  {} No patch file at {}.", "!".yellow(), patch_path.display());
+            println!(
+                "  {} No patch file at {}.",
+                "!".yellow(),
+                patch_path.display()
+            );
             println!("  In Claude Code: \"fix gap {}\"", gap.id);
             return Ok(());
         }
@@ -578,7 +649,12 @@ async fn cmd_patch(args: cli::PatchArgs) -> Result<()> {
             .ok_or_else(|| anyhow::anyhow!("patch has no `+++ b/<path>` target header"))?;
         output::patch::apply_to_file(&target, &diff)
             .with_context(|| format!("failed to apply patch to {}", target.display()))?;
-        println!("  {} Applied fix for {} to {}", "✓".green(), gap.id, target.display());
+        println!(
+            "  {} Applied fix for {} to {}",
+            "✓".green(),
+            gap.id,
+            target.display()
+        );
     }
 
     Ok(())
@@ -590,8 +666,7 @@ async fn cmd_acknowledge(args: cli::AcknowledgeArgs) -> Result<()> {
     let suppress_path = std::path::Path::new(".lemma/suppress.toml");
 
     let mut doc = if suppress_path.exists() {
-        std::fs::read_to_string(suppress_path)
-            .context("failed to read suppress.toml")?
+        std::fs::read_to_string(suppress_path).context("failed to read suppress.toml")?
     } else {
         String::from("# Lemma gap suppressions\n# Generated by `lemma acknowledge`\n\n")
     };
@@ -603,10 +678,8 @@ async fn cmd_acknowledge(args: cli::AcknowledgeArgs) -> Result<()> {
         chrono::Utc::now().format("%Y-%m-%d"),
     ));
 
-    std::fs::create_dir_all(".lemma")
-        .context("failed to create .lemma directory")?;
-    std::fs::write(suppress_path, &doc)
-        .context("failed to write suppress.toml")?;
+    std::fs::create_dir_all(".lemma").context("failed to create .lemma directory")?;
+    std::fs::write(suppress_path, &doc).context("failed to write suppress.toml")?;
 
     println!(
         "  {} Gap {} acknowledged: \"{}\"",
@@ -622,7 +695,6 @@ async fn cmd_acknowledge(args: cli::AcknowledgeArgs) -> Result<()> {
     Ok(())
 }
 
-
 #[derive(serde::Deserialize, Default)]
 struct Suppressions {
     #[serde(default)]
@@ -636,7 +708,9 @@ struct SuppressEntry {
 
 fn load_suppressions() -> std::collections::HashSet<String> {
     let p = std::path::Path::new(".lemma/suppress.toml");
-    let Ok(raw) = std::fs::read_to_string(p) else { return Default::default() };
+    let Ok(raw) = std::fs::read_to_string(p) else {
+        return Default::default();
+    };
     toml::from_str::<Suppressions>(&raw)
         .unwrap_or_default()
         .gap
@@ -663,7 +737,9 @@ fn get_git_commit(program_path: &std::path::Path) -> Option<Box<str>> {
         .current_dir(&dir)
         .output()
         .ok()?;
-    if !output.status.success() { return None; }
+    if !output.status.success() {
+        return None;
+    }
     let hash = String::from_utf8(output.stdout).ok()?;
     Some(hash.trim().into())
 }
@@ -672,25 +748,34 @@ fn target_from_diff(diff: &str) -> Option<std::path::PathBuf> {
     for line in diff.lines() {
         if let Some(rest) = line.strip_prefix("+++ ") {
             let p = rest.trim().trim_start_matches("b/");
-            if p != "/dev/null" { return Some(std::path::PathBuf::from(p)); }
+            if p != "/dev/null" {
+                return Some(std::path::PathBuf::from(p));
+            }
         }
     }
     None
 }
 
 fn write_analysis_context(
-    result:    &AnalysisResult,
+    result: &AnalysisResult,
     retrieved: &[(Box<str>, Vec<types::RetrievedEntry>)],
 ) -> Result<()> {
     let lemma_dir = std::path::Path::new(".lemma");
-    std::fs::create_dir_all(lemma_dir)
-        .context("failed to create .lemma directory")?;
+    std::fs::create_dir_all(lemma_dir).context("failed to create .lemma directory")?;
 
     let context_path = lemma_dir.join("analysis-context.md");
 
-    let unacked   = result.gaps.iter().filter(|g| !g.acknowledged).count();
-    let critical  = result.gaps.iter().filter(|g| !g.acknowledged && g.severity == types::Severity::Critical).count();
-    let high      = result.gaps.iter().filter(|g| !g.acknowledged && g.severity == types::Severity::High).count();
+    let unacked = result.gaps.iter().filter(|g| !g.acknowledged).count();
+    let critical = result
+        .gaps
+        .iter()
+        .filter(|g| !g.acknowledged && g.severity == types::Severity::Critical)
+        .count();
+    let high = result
+        .gaps
+        .iter()
+        .filter(|g| !g.acknowledged && g.severity == types::Severity::High)
+        .count();
 
     let mut content = format!(
         "# Lemma Analysis Context\n\n\
@@ -714,22 +799,26 @@ fn write_analysis_context(
          - Critical: {critical}\n\
          - High: {high}\n\n\
          ## Gaps\n\n",
-        program      = result.program,
-        framework    = result.framework,
+        program = result.program,
+        framework = result.framework,
         program_type = result.program_type,
-        version      = result.lemma_version,
-        kb_version   = result.kb_version,
-        timestamp    = result.analysis_timestamp,
-        total        = unacked,
-        critical     = critical,
-        high         = high,
+        version = result.lemma_version,
+        kb_version = result.kb_version,
+        timestamp = result.analysis_timestamp,
+        total = unacked,
+        critical = critical,
+        high = high,
     );
 
     for gap in &result.gaps {
-        if gap.acknowledged { continue; }
+        if gap.acknowledged {
+            continue;
+        }
         content.push_str(&format!(
             "- `{}` [{} / {}] {} (handler: `{}`)\n",
-            gap.id, gap.severity, gap.vuln_class,
+            gap.id,
+            gap.severity,
+            gap.vuln_class,
             gap.description.chars().take(80).collect::<String>(),
             gap.handler_name,
         ));
@@ -737,7 +826,9 @@ fn write_analysis_context(
 
     content.push_str("\n## Retrieved Evidence\n\n");
     for (handler_name, entries) in retrieved {
-        if entries.is_empty() { continue; }
+        if entries.is_empty() {
+            continue;
+        }
         content.push_str(&format!("### Handler: `{}`\n\n", handler_name));
         for entry in entries.iter().take(3) {
             content.push_str(&format!(
@@ -750,8 +841,7 @@ fn write_analysis_context(
         content.push('\n');
     }
 
-    std::fs::write(&context_path, content)
-        .context("failed to write analysis context")?;
+    std::fs::write(&context_path, content).context("failed to write analysis context")?;
 
     Ok(())
 }

@@ -12,7 +12,6 @@ pub const KB_LATEST_VERSION_URL: &str =
 pub const KB_LATEST_DOWNLOAD_URL: &str =
     "https://github.com/replicolabs/kb/releases/latest/download/knowledge_base.json";
 
-
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct Config {
     #[serde(default)]
@@ -36,8 +35,7 @@ pub struct KbConfig {
 }
 
 pub fn lemma_dir() -> Result<PathBuf> {
-    let home = dirs::home_dir()
-        .context("could not determine home directory")?;
+    let home = dirs::home_dir().context("could not determine home directory")?;
     Ok(home.join(LEMMA_DIR_NAME))
 }
 
@@ -68,22 +66,22 @@ impl Config {
         };
 
         if let Ok(key) = std::env::var("VOYAGE_API_KEY")
-            && !key.is_empty() {
-                config.voyage.api_key = Some(key);
-            }
+            && !key.is_empty()
+        {
+            config.voyage.api_key = Some(key);
+        }
 
         Ok(config)
     }
 
     pub fn save(&self) -> Result<()> {
-        let dir  = lemma_dir()?;
+        let dir = lemma_dir()?;
         let path = dir.join(CONFIG_FILE_NAME);
 
         std::fs::create_dir_all(&dir)
             .with_context(|| format!("failed to create lemma directory at {}", dir.display()))?;
 
-        let contents = toml::to_string_pretty(self)
-            .context("failed to serialise config")?;
+        let contents = toml::to_string_pretty(self).context("failed to serialise config")?;
 
         std::fs::write(&path, contents)
             .with_context(|| format!("failed to write config to {}", path.display()))?;
@@ -96,17 +94,16 @@ impl Config {
     }
 
     pub fn is_initialised(&self) -> bool {
-        self.voyage.api_key.as_deref().is_some_and(|k| !k.is_empty())
+        self.voyage
+            .api_key
+            .as_deref()
+            .is_some_and(|k| !k.is_empty())
     }
 
-    pub fn set_kb_version(
-        &mut self,
-        version: impl Into<String>,
-        sha256:  impl Into<String>,
-    ) {
+    pub fn set_kb_version(&mut self, version: impl Into<String>, sha256: impl Into<String>) {
         let now = chrono::Utc::now().to_rfc3339();
-        self.kb.version      = Some(version.into());
-        self.kb.sha256       = Some(sha256.into());
+        self.kb.version = Some(version.into());
+        self.kb.sha256 = Some(sha256.into());
         self.kb.last_updated = Some(now);
     }
 
@@ -120,16 +117,15 @@ impl Config {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct KbLock {
-    pub version:      String,
-    pub url:          String,
-    pub sha256:       String,
+    pub version: String,
+    pub url: String,
+    pub sha256: String,
     pub downloaded_at: String,
 }
 
 impl KbLock {
     pub fn write(&self, path: &Path) -> Result<()> {
-        let contents = toml::to_string_pretty(self)
-            .context("failed to serialise kb.lock")?;
+        let contents = toml::to_string_pretty(self).context("failed to serialise kb.lock")?;
         std::fs::write(path, contents)
             .with_context(|| format!("failed to write kb.lock to {}", path.display()))?;
         Ok(())

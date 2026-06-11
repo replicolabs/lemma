@@ -22,21 +22,21 @@ pub mod dc022_pda_verify;
 use crate::types::{GapSource, SecurityGap, Severity, VulnClass};
 
 pub(super) fn gap(
-    handler_name:   &str,
-    vuln_class:     VulnClass,
-    severity:       Severity,
-    description:    impl Into<String>,
+    handler_name: &str,
+    vuln_class: VulnClass,
+    severity: Severity,
+    description: impl Into<String>,
     source_rule_id: &str,
 ) -> SecurityGap {
     SecurityGap {
-        id:             Box::from(""),        
-        handler_name:   Box::from(handler_name),
+        id: Box::from(""),
+        handler_name: Box::from(handler_name),
         vuln_class,
         severity,
-        description:    description.into().into_boxed_str(),
+        description: description.into().into_boxed_str(),
         source_rule_id: Box::from(source_rule_id),
-        source:         GapSource::Deterministic,
-        acknowledged:   false,
-        ack_reason:     None,
+        source: GapSource::Deterministic,
+        acknowledged: false,
+        ack_reason: None,
     }
 }

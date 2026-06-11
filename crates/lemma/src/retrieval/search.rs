@@ -1,10 +1,10 @@
 use crate::types::{KnowledgeBase, RetrievedEntry};
 
 pub fn search(
-    kb:              &KnowledgeBase,
+    kb: &KnowledgeBase,
     query_embedding: &[f32],
-    top_k:           usize,
-    min_similarity:  f32,
+    top_k: usize,
+    min_similarity: f32,
 ) -> Vec<RetrievedEntry> {
     if kb.entries.is_empty() || top_k == 0 {
         return Vec::new();
@@ -12,11 +12,9 @@ pub fn search(
 
     let query_dims = query_embedding.len();
     debug_assert_eq!(
-        query_dims,
-        kb.embedding_dimensions as usize,
+        query_dims, kb.embedding_dimensions as usize,
         "query embedding dimensions {} do not match KB dimensions {}",
-        query_dims,
-        kb.embedding_dimensions,
+        query_dims, kb.embedding_dimensions,
     );
     let mut scores: Vec<(f32, usize)> = kb
         .entries
@@ -46,9 +44,7 @@ pub fn search(
         scores.truncate(k);
     }
 
-    scores.sort_unstable_by(|(a, _), (b, _)| {
-        b.partial_cmp(a).unwrap_or(std::cmp::Ordering::Equal)
-    });
+    scores.sort_unstable_by(|(a, _), (b, _)| b.partial_cmp(a).unwrap_or(std::cmp::Ordering::Equal));
 
     scores
         .into_iter()
@@ -63,12 +59,12 @@ pub fn search(
 fn cosine_similarity(a: &[f32], b: &[f32]) -> f32 {
     debug_assert_eq!(a.len(), b.len());
 
-    let mut dot  = 0.0f32;
+    let mut dot = 0.0f32;
     let mut mag_a = 0.0f32;
     let mut mag_b = 0.0f32;
 
     for (&ai, &bi) in a.iter().zip(b.iter()) {
-        dot   += ai * bi;
+        dot += ai * bi;
         mag_a += ai * ai;
         mag_b += bi * bi;
     }
@@ -82,7 +78,7 @@ fn cosine_similarity(a: &[f32], b: &[f32]) -> f32 {
 }
 
 pub fn filter_by_vuln_class<'a>(
-    entries:    &'a [RetrievedEntry],
+    entries: &'a [RetrievedEntry],
     vuln_class: &str,
 ) -> impl Iterator<Item = &'a RetrievedEntry> {
     entries.iter().filter(move |e| {

@@ -9,7 +9,10 @@
 //! An attacker can exploit these dangling approvals after the account
 //! is gone to drain associated token accounts.
 
-use crate::{checker::rules::gap, types::{InstructionHandler, SecurityGap, Severity, VulnClass}};
+use crate::{
+    checker::rules::gap,
+    types::{InstructionHandler, SecurityGap, Severity, VulnClass},
+};
 
 pub fn check(handlers: &[InstructionHandler]) -> Vec<SecurityGap> {
     let mut gaps = Vec::new();
@@ -23,7 +26,8 @@ pub fn check(handlers: &[InstructionHandler]) -> Vec<SecurityGap> {
         }
         let has_token_account = handler.accounts.iter().any(|a| {
             let name_lower = a.name.to_ascii_lowercase();
-            name_lower.contains("token") || name_lower.contains("vault")
+            name_lower.contains("token")
+                || name_lower.contains("vault")
                 || a.type_str.to_ascii_lowercase().contains("tokenaccount")
         });
 

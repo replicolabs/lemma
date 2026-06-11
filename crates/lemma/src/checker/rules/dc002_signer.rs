@@ -14,8 +14,14 @@ use crate::{
 };
 
 const AUTHORITY_PATTERNS: &[&str] = &[
-    "authority", "admin", "owner", "manager", "operator",
-    "governor", "controller", "supervisor",
+    "authority",
+    "admin",
+    "owner",
+    "manager",
+    "operator",
+    "governor",
+    "controller",
+    "supervisor",
 ];
 
 pub fn check(handlers: &[InstructionHandler]) -> Vec<SecurityGap> {
@@ -61,8 +67,19 @@ fn looks_like_authority(name: &str) -> bool {
 
 fn handler_transfers_value(handler: &InstructionHandler) -> bool {
     let name = handler.name.to_ascii_lowercase();
-    ["withdraw", "transfer", "burn", "drain", "swap", "borrow",
-     "liquidate", "claim", "redeem", "send", "pay"]
-        .iter()
-        .any(|kw| name.contains(kw))
+    [
+        "withdraw",
+        "transfer",
+        "burn",
+        "drain",
+        "swap",
+        "borrow",
+        "liquidate",
+        "claim",
+        "redeem",
+        "send",
+        "pay",
+    ]
+    .iter()
+    .any(|kw| name.contains(kw))
 }

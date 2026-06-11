@@ -10,11 +10,14 @@
 //!
 //! This is a program-level gap rather than a per-handler gap.
 
-use crate::{checker::rules::gap, types::{SecurityGap, Severity, VulnClass}};
+use crate::{
+    checker::rules::gap,
+    types::{SecurityGap, Severity, VulnClass},
+};
 
 pub fn check(source: &str) -> Vec<SecurityGap> {
-    let has_overflow_checks = source.contains("overflow-checks = true")
-        || source.contains("overflow_checks = true");
+    let has_overflow_checks =
+        source.contains("overflow-checks = true") || source.contains("overflow_checks = true");
 
     if has_overflow_checks {
         return Vec::new();
@@ -27,7 +30,7 @@ pub fn check(source: &str) -> Vec<SecurityGap> {
     }
 
     vec![gap(
-        "program",   
+        "program",
         VulnClass::ArithmeticError,
         Severity::Medium,
         "The release profile does not set `overflow-checks = true`. All integer \

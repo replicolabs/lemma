@@ -22,10 +22,20 @@ fn write_header(out: &mut String, result: &AnalysisResult) {
     writeln!(out, "| Program | `{}` |", result.program).ok();
     writeln!(out, "| Framework | {} |", result.framework).ok();
     writeln!(out, "| Program type | {} |", result.program_type).ok();
-    writeln!(out, "| Security score | **{}/100** |", result.security_score).ok();
+    writeln!(
+        out,
+        "| Security score | **{}/100** |",
+        result.security_score
+    )
+    .ok();
     writeln!(out, "| Lemma version | {} |", result.lemma_version).ok();
     writeln!(out, "| Knowledge base | {} |", result.kb_version).ok();
-    writeln!(out, "| Analysis date | {} |", &result.analysis_timestamp[..10]).ok();
+    writeln!(
+        out,
+        "| Analysis date | {} |",
+        &result.analysis_timestamp[..10]
+    )
+    .ok();
     if let Some(commit) = &result.git_commit {
         writeln!(out, "| Git commit | `{}` |", &commit[..7.min(commit.len())]).ok();
     }
@@ -40,7 +50,8 @@ fn write_header(out: &mut String, result: &AnalysisResult) {
          All findings should be reviewed by a qualified security engineer \
          before deployment. This tool may produce false positives and may \
          miss vulnerabilities not covered by its knowledge base."
-    ).ok();
+    )
+    .ok();
     writeln!(out).ok();
 }
 
@@ -49,22 +60,52 @@ fn write_executive_summary(out: &mut String, result: &AnalysisResult) {
     writeln!(out).ok();
 
     let unacked: Vec<&SecurityGap> = result.gaps.iter().filter(|g| !g.acknowledged).collect();
-    let acked: Vec<&SecurityGap>   = result.gaps.iter().filter(|g| g.acknowledged).collect();
+    let acked: Vec<&SecurityGap> = result.gaps.iter().filter(|g| g.acknowledged).collect();
 
-    let critical = unacked.iter().filter(|g| g.severity == Severity::Critical).count();
-    let high     = unacked.iter().filter(|g| g.severity == Severity::High).count();
-    let medium   = unacked.iter().filter(|g| g.severity == Severity::Medium).count();
-    let low      = unacked.iter().filter(|g| g.severity == Severity::Low).count();
-    let info     = unacked.iter().filter(|g| g.severity == Severity::Informational).count();
+    let critical = unacked
+        .iter()
+        .filter(|g| g.severity == Severity::Critical)
+        .count();
+    let high = unacked
+        .iter()
+        .filter(|g| g.severity == Severity::High)
+        .count();
+    let medium = unacked
+        .iter()
+        .filter(|g| g.severity == Severity::Medium)
+        .count();
+    let low = unacked
+        .iter()
+        .filter(|g| g.severity == Severity::Low)
+        .count();
+    let info = unacked
+        .iter()
+        .filter(|g| g.severity == Severity::Informational)
+        .count();
 
-    writeln!(out, "The analysis identified **{}** security gap(s):\n", unacked.len()).ok();
+    writeln!(
+        out,
+        "The analysis identified **{}** security gap(s):\n",
+        unacked.len()
+    )
+    .ok();
     writeln!(out, "| Severity | Count |").ok();
     writeln!(out, "|---|---|").ok();
-    if critical > 0 { writeln!(out, "| 🔴 Critical | {} |", critical).ok(); }
-    if high     > 0 { writeln!(out, "| 🟠 High | {} |", high).ok(); }
-    if medium   > 0 { writeln!(out, "| 🟡 Medium | {} |", medium).ok(); }
-    if low      > 0 { writeln!(out, "| 🔵 Low | {} |", low).ok(); }
-    if info     > 0 { writeln!(out, "| ⚪ Informational | {} |", info).ok(); }
+    if critical > 0 {
+        writeln!(out, "| 🔴 Critical | {} |", critical).ok();
+    }
+    if high > 0 {
+        writeln!(out, "| 🟠 High | {} |", high).ok();
+    }
+    if medium > 0 {
+        writeln!(out, "| 🟡 Medium | {} |", medium).ok();
+    }
+    if low > 0 {
+        writeln!(out, "| 🔵 Low | {} |", low).ok();
+    }
+    if info > 0 {
+        writeln!(out, "| ⚪ Informational | {} |", info).ok();
+    }
     if !acked.is_empty() {
         writeln!(out, "| ✅ Acknowledged | {} |", acked.len()).ok();
     }
@@ -87,25 +128,28 @@ fn write_gap_details(out: &mut String, result: &AnalysisResult) {
 
     for (i, gap) in unacked.iter().enumerate() {
         let severity_emoji = match gap.severity {
-            Severity::Critical      => "🔴",
-            Severity::High          => "🟠",
-            Severity::Medium        => "🟡",
-            Severity::Low           => "🔵",
+            Severity::Critical => "🔴",
+            Severity::High => "🟠",
+            Severity::Medium => "🟡",
+            Severity::Low => "🔵",
             Severity::Informational => "⚪",
         };
 
         writeln!(
             out,
             "### {} {} — {} (`{}`)",
-            severity_emoji,
-            gap.id,
-            gap.vuln_class,
-            gap.handler_name,
-        ).ok();
+            severity_emoji, gap.id, gap.vuln_class, gap.handler_name,
+        )
+        .ok();
         writeln!(out).ok();
         writeln!(out, "**Severity:** {}  ", gap.severity).ok();
         writeln!(out, "**Handler:** `{}`  ", gap.handler_name).ok();
-        writeln!(out, "**Source:** `{}` [{}]  ", gap.source_rule_id, gap.source).ok();
+        writeln!(
+            out,
+            "**Source:** `{}` [{}]  ",
+            gap.source_rule_id, gap.source
+        )
+        .ok();
         writeln!(out).ok();
         writeln!(out, "{}", gap.description).ok();
         writeln!(out).ok();
@@ -120,7 +164,11 @@ fn write_gap_details(out: &mut String, result: &AnalysisResult) {
     if !acked.is_empty() {
         writeln!(out, "## Acknowledged Gaps").ok();
         writeln!(out).ok();
-        writeln!(out, "The following gaps have been acknowledged by the development team:").ok();
+        writeln!(
+            out,
+            "The following gaps have been acknowledged by the development team:"
+        )
+        .ok();
         writeln!(out).ok();
         for gap in acked {
             let reason = gap.ack_reason.as_deref().unwrap_or("no reason given");
@@ -142,7 +190,8 @@ fn write_invariants_section(out: &mut String, result: &AnalysisResult) {
         "The following formal invariants were generated for each analyzed handler. \
          These invariants are expressed in natural language, as Kani assertions, and \
          as QEDSpec clauses. A `.qedspec` file is generated alongside this report."
-    ).ok();
+    )
+    .ok();
     writeln!(out).ok();
 
     for inv in &result.invariants {
@@ -151,7 +200,16 @@ fn write_invariants_section(out: &mut String, result: &AnalysisResult) {
         writeln!(out, "**Property:** {}", inv.natural_language).ok();
         writeln!(out, "**Confidence:** {:.0}%  ", inv.confidence * 100.0).ok();
         writeln!(out, "**Grounded in:** `{}`  ", inv.grounded_in).ok();
-        writeln!(out, "**Kani valid:** {}  ", if inv.kani_valid { "✓" } else { "✗ — review required" }).ok();
+        writeln!(
+            out,
+            "**Kani valid:** {}  ",
+            if inv.kani_valid {
+                "✓"
+            } else {
+                "✗ — review required"
+            }
+        )
+        .ok();
         writeln!(out).ok();
 
         if !inv.kani_assertion.is_empty() {
@@ -174,13 +232,11 @@ fn write_footer(out: &mut String, result: &AnalysisResult) {
         result.lemma_version,
         result.kb_version,
         &result.analysis_timestamp[..10],
-    ).ok();
+    )
+    .ok();
 }
 
-pub fn write_to_file(
-    path:    &std::path::Path,
-    content: &str,
-) -> anyhow::Result<()> {
+pub fn write_to_file(path: &std::path::Path, content: &str) -> anyhow::Result<()> {
     std::fs::write(path, content)
         .map_err(|e| anyhow::anyhow!("failed to write report to {}: {}", path.display(), e))
 }

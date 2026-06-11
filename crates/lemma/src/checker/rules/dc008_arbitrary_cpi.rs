@@ -8,15 +8,24 @@
 //! The malicious program executes with the signed accounts and
 //! writable authority the calling program passed to it.
 
-use crate::{checker::rules::gap, types::{InstructionHandler, SecurityGap, Severity, VulnClass}};
+use crate::{
+    checker::rules::gap,
+    types::{InstructionHandler, SecurityGap, Severity, VulnClass},
+};
 
 pub fn check(handlers: &[InstructionHandler]) -> Vec<SecurityGap> {
     let mut gaps = Vec::new();
     for handler in handlers {
         for cpi in &handler.cpi_calls {
-            if cpi.program_verified { continue; }
-            if cpi.program_account.as_ref() == "unknown" { continue; }
-            if is_known_safe(&cpi.program_account) { continue; }
+            if cpi.program_verified {
+                continue;
+            }
+            if cpi.program_account.as_ref() == "unknown" {
+                continue;
+            }
+            if is_known_safe(&cpi.program_account) {
+                continue;
+            }
 
             gaps.push(gap(
                 &handler.name,

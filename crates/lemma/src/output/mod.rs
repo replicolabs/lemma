@@ -6,10 +6,7 @@ pub mod report;
 use anyhow::Result;
 use std::path::Path;
 
-use crate::{
-    cli::OutputFormat,
-    types::AnalysisResult,
-};
+use crate::{cli::OutputFormat, types::AnalysisResult};
 
 #[derive(Debug, Default)]
 pub struct ArtifactSet {
@@ -18,10 +15,10 @@ pub struct ArtifactSet {
 }
 
 pub fn write_all(
-    result:      &AnalysisResult,
-    format:      OutputFormat,
+    result: &AnalysisResult,
+    format: OutputFormat,
     output_path: Option<&Path>,
-    artifacts:   &ArtifactSet,
+    artifacts: &ArtifactSet,
 ) -> Result<()> {
     match format {
         OutputFormat::Text => {
@@ -48,18 +45,14 @@ pub fn write_all(
 
     if artifacts.qedspec && !result.invariants.is_empty() {
         let spec_path = derive_artifact_path(result, "qedspec");
-        let content   = qedspec::generate(
-            result.program.as_ref(),
-            None,
-            &result.invariants,
-        );
+        let content = qedspec::generate(result.program.as_ref(), None, &result.invariants);
         qedspec::write_to_file(&spec_path, &content)?;
         eprintln!("  Wrote QEDSpec: {}", spec_path.display());
     }
 
     if artifacts.markdown_report {
         let report_path = derive_artifact_path(result, "md");
-        let content     = report::generate_markdown(result);
+        let content = report::generate_markdown(result);
         report::write_to_file(&report_path, &content)?;
         eprintln!("  Wrote report: {}", report_path.display());
     }

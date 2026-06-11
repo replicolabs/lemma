@@ -12,7 +12,10 @@
 //! Note: this rule operates on handler names and account patterns since
 //! we do not have full data flow analysis. It flags patterns for review.
 
-use crate::{checker::rules::gap, types::{InstructionHandler, SecurityGap, Severity, VulnClass}};
+use crate::{
+    checker::rules::gap,
+    types::{InstructionHandler, SecurityGap, Severity, VulnClass},
+};
 
 pub fn check(handlers: &[InstructionHandler]) -> Vec<SecurityGap> {
     let init_handlers: Vec<&InstructionHandler> = handlers
@@ -41,9 +44,9 @@ pub fn check(handlers: &[InstructionHandler]) -> Vec<SecurityGap> {
                 continue;
             }
             let updated_later = non_init_handlers.iter().any(|h| {
-                h.accounts.iter().any(|a| {
-                    a.name == account.name && a.is_mutable
-                })
+                h.accounts
+                    .iter()
+                    .any(|a| a.name == account.name && a.is_mutable)
             });
             if !updated_later && non_init_handlers.len() > 1 {
                 gaps.push(gap(

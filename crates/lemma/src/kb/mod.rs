@@ -1,10 +1,10 @@
 pub mod update;
 
-use anyhow::{bail, Context, Result};
+use anyhow::{Context, Result, bail};
 use sha2::{Digest, Sha256};
 
 use crate::{
-    config::{kb_path, Config},
+    config::{Config, kb_path},
     types::KnowledgeBase,
 };
 
@@ -68,9 +68,12 @@ pub fn load(config: &Config) -> Result<KnowledgeBase> {
 }
 
 pub fn status_line(config: &Config) -> String {
-    match (config.kb.version.as_deref(), config.kb.last_updated.as_deref()) {
+    match (
+        config.kb.version.as_deref(),
+        config.kb.last_updated.as_deref(),
+    ) {
         (Some(v), Some(ts)) => format!("version {} (updated {})", v, &ts[..10]),
-        (Some(v), None)     => format!("version {} (update time unknown)", v),
-        (None, _)           => "not downloaded — run `lemma kb update`".to_string(),
+        (Some(v), None) => format!("version {} (update time unknown)", v),
+        (None, _) => "not downloaded — run `lemma kb update`".to_string(),
     }
 }
